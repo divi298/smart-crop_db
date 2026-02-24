@@ -6,6 +6,12 @@ app = Flask(__name__)
 # Temporary storage
 sensor_history = []
 
+# ✅ Home Route (Fixes "Not Found")
+@app.route("/")
+def home():
+    return "Smart Crop IoT Server is Running 🚀"
+
+# ✅ Receive Sensor Data
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
     data = request.get_json()
@@ -28,10 +34,7 @@ def receive_sensor():
 
     sensor_history.append(record)
 
-    print("📥 Data received:")
-    print(record)
-
-    # Simple crop logic
+    # Simple crop recommendation logic
     if moisture < 400:
         soil_condition = "Wet"
         crop = "Rice"
@@ -54,10 +57,11 @@ def receive_sensor():
     return jsonify(response), 200
 
 
+# ✅ View History
 @app.route("/history", methods=["GET"])
 def get_history():
     return jsonify(sensor_history)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
