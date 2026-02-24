@@ -1,25 +1,20 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from datetime import datetime
 
 app = Flask(__name__)
 
-# Temporary storage
 sensor_history = []
 
-# ✅ Home Route (Fixes "Not Found")
 @app.route("/")
-def home():
-    return "Smart Crop IoT Server is Running 🚀"
+def dashboard():
+    return render_template("dashboard.html")
 
-# ✅ Receive Sensor Data
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
     data = request.get_json()
 
     if not data:
         return jsonify({"error": "No data received"}), 400
-
-    print("Received:", data)
 
     moisture = data.get("moisture")
     temperature = data.get("temperature")
@@ -29,12 +24,14 @@ def receive_sensor():
         "moisture": moisture,
         "temperature": temperature,
         "humidity": humidity,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": datetime.now().strftime("%H:%M:%S")
     }
 
     sensor_history.append(record)
 
-    # Simple crop recommendation logic
+    if len(sensor_history) > 50:
+        sensor_history.pop(0)
+
     if moisture < 400:
         soil_condition = "Wet"
         crop = "Rice"
@@ -57,9 +54,8 @@ def receive_sensor():
     return jsonify(response), 200
 
 
-# ✅ View History
-@app.route("/history", methods=["GET"])
-def get_history():
+@app.route("/history")
+def history():
     return jsonify(sensor_history)
 
 
