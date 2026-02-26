@@ -27,7 +27,6 @@ def dashboard():
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
 
-    # Check API Key
     api_key_header = request.headers.get("x-api-key")
 
     if not api_key_header or api_key_header != API_KEY:
@@ -42,9 +41,7 @@ def receive_sensor():
     temperature = data.get("temperature", 0)
     humidity = data.get("humidity", 0)
 
-    # ==============================
     # 🌱 Crop Recommendation Logic
-    # ==============================
     if moisture < 400:
         soil_condition = "Wet"
         crop = "Rice"
@@ -70,7 +67,6 @@ def receive_sensor():
 
     sensor_history.append(record)
 
-    # Keep only last 50 records
     if len(sensor_history) > 50:
         sensor_history.pop(0)
 
@@ -88,6 +84,40 @@ def receive_sensor():
 @app.route("/history", methods=["GET"])
 def history():
     return jsonify(sensor_history)
+
+
+# ==============================
+# 🌾 Yield Prediction API
+# ==============================
+@app.route("/predict_yield", methods=["POST"])
+def predict_yield():
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    land = float(data.get("land", 0))
+    crop = data.get("crop", "")
+
+    # Base average yield per acre (simple logic)
+    if crop == "Rice":
+        avg_yield = 30
+    elif crop == "Maize":
+        avg_yield = 25
+    elif crop == "Millet":
+        avg_yield = 18
+    else:
+        avg_yield = 20
+
+    predicted_yield = land * avg_yield
+
+    return jsonify({
+        "land": land,
+        "crop": crop,
+        "predicted_yield": predicted_yield,
+        "unit": "quintals"
+    }), 200
 
 
 # ==============================
