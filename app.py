@@ -1,19 +1,14 @@
-import os
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
 
 app = Flask(__name__)
 
-# Store last 50 records
 sensor_history = []
 
-# 🔥 Dashboard Route
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
 
-
-# 🔥 Receive Sensor Data from ESP
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
     data = request.get_json()
@@ -34,40 +29,12 @@ def receive_sensor():
 
     sensor_history.append(record)
 
-    # Keep only last 50 entries
     if len(sensor_history) > 50:
         sensor_history.pop(0)
 
-    # Crop Recommendation Logic
-    if moisture < 400:
-        soil_condition = "Wet"
-        crop = "Rice"
-        fertilizer = "Urea + DAP"
-    elif moisture < 700:
-        soil_condition = "Moderate"
-        crop = "Maize"
-        fertilizer = "NPK 20-20-20"
-    else:
-        soil_condition = "Dry"
-        crop = "Millet"
-        fertilizer = "Compost + Potash"
-
-    response = {
-        "soil_condition": soil_condition,
-        "recommended_crop": crop,
-        "recommended_fertilizer": fertilizer
-    }
-
-    return jsonify(response), 200
+    return jsonify({"status": "success"}), 200
 
 
-# 🔥 API Route for Dashboard
-@app.route("/history", methods=["GET"])
+@app.route("/history")
 def history():
     return jsonify(sensor_history)
-
-
-# 🔥 Required for Render (IMPORTANT)
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
