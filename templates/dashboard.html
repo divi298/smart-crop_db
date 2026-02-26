@@ -2,12 +2,13 @@
 <html>
 <head>
     <title>Smart Crop IoT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<header>
+<header class="main-header">
     <h1>🌱 Smart Crop IoT Dashboard</h1>
 
     <select id="languageSwitcher">
@@ -18,8 +19,12 @@
 </header>
 
 <!-- ========================= -->
-<!-- 🌡 Sensor Cards -->
+<!-- 🌡 LIVE SENSOR STATUS -->
 <!-- ========================= -->
+<section class="section-title">
+    <h2>📡 Live Field Status</h2>
+</section>
+
 <section class="cards">
     <div class="card">
         <h3 data-key="moisture">Moisture</h3>
@@ -38,42 +43,54 @@
 </section>
 
 <!-- ========================= -->
-<!-- 🌾 Crop Recommendation -->
+<!-- 🌾 CROP RECOMMENDATION -->
 <!-- ========================= -->
-<section class="recommendation">
-    <h2 data-key="recommendation">Crop Recommendation</h2>
+<section class="section-title">
+    <h2 data-key="recommendation">🌾 Crop Recommendation</h2>
+</section>
 
-    <p><strong data-key="soil">Soil:</strong> 
+<section class="recommendation">
+    <p><strong data-key="soil">Soil Condition:</strong>
         <span id="soil">--</span>
     </p>
 
-    <p><strong data-key="crop">Crop:</strong> 
+    <p><strong data-key="crop">Recommended Crop:</strong>
         <span id="crop">--</span>
     </p>
 
-    <p><strong data-key="fertilizer">Fertilizer:</strong> 
+    <p><strong data-key="fertilizer">Fertilizer:</strong>
         <span id="fertilizer">--</span>
     </p>
 </section>
 
 <!-- ========================= -->
-<!-- 🌾 Yield Prediction -->
+<!-- 🌾 YIELD PREDICTION -->
 <!-- ========================= -->
+<section class="section-title">
+    <h2>📈 Yield Prediction</h2>
+</section>
+
 <section class="yield-section">
-    <h2>🌾 Yield Prediction</h2>
+    <label>Enter Land (in acres):</label>
 
-    <label>Enter Land (acres):</label><br><br>
-    <input type="number" id="landInput" placeholder="e.g. 2" min="0" step="0.1">
+    <div class="yield-input">
+        <input type="number" id="landInput" placeholder="e.g. 2" min="0" step="0.1">
+        <button onclick="predictYield()">Predict</button>
+    </div>
 
-    <button onclick="predictYield()">Predict Yield</button>
-
-    <h3 id="yieldResult"></h3>
+    <div class="yield-result">
+        <h3 id="yieldResult"></h3>
+    </div>
 </section>
 
 <!-- ========================= -->
-<!-- 📊 Chart Section -->
+<!-- 📊 SENSOR TREND CHART -->
 <!-- ========================= -->
-<section>
+<section class="section-title">
+    <h2>📊 Moisture Trend</h2>
+</section>
+
+<section class="chart-section">
     <canvas id="sensorChart"></canvas>
 </section>
 
