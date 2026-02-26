@@ -1,65 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Smart Crop IoT Dashboard</title>
+    <title>Smart Crop IoT</title>
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: Arial; text-align: center; background: #f4f4f4; }
-        h1 { color: green; }
-        canvas { background: white; padding: 20px; border-radius: 10px; }
-    </style>
 </head>
 <body>
 
-<h1>🌱 Smart Crop IoT Dashboard</h1>
+<header>
+    <h1>🌱 Smart Crop IoT Dashboard</h1>
 
-<canvas id="sensorChart" width="800" height="400"></canvas>
+    <select id="languageSwitcher">
+        <option value="en">English</option>
+        <option value="te">తెలుగు</option>
+        <option value="hi">हिंदी</option>
+    </select>
+</header>
 
-<script>
-const ctx = document.getElementById('sensorChart').getContext('2d');
+<section class="cards">
+    <div class="card">
+        <h3 data-key="moisture">Moisture</h3>
+        <p id="moistureValue">--</p>
+    </div>
 
-let chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: [
-            {
-                label: 'Moisture',
-                borderColor: 'blue',
-                data: [],
-                fill: false
-            },
-            {
-                label: 'Temperature',
-                borderColor: 'red',
-                data: [],
-                fill: false
-            },
-            {
-                label: 'Humidity',
-                borderColor: 'green',
-                data: [],
-                fill: false
-            }
-        ]
-    }
-});
+    <div class="card">
+        <h3 data-key="temperature">Temperature</h3>
+        <p id="temperatureValue">--</p>
+    </div>
 
-async function fetchData() {
-    const response = await fetch('/history');
-    const data = await response.json();
+    <div class="card">
+        <h3 data-key="humidity">Humidity</h3>
+        <p id="humidityValue">--</p>
+    </div>
+</section>
 
-    chart.data.labels = data.map(d => d.timestamp);
-    chart.data.datasets[0].data = data.map(d => d.moisture);
-    chart.data.datasets[1].data = data.map(d => d.temperature);
-    chart.data.datasets[2].data = data.map(d => d.humidity);
+<section class="recommendation">
+    <h2 data-key="recommendation">Crop Recommendation</h2>
+    <p><strong data-key="soil">Soil:</strong> <span id="soil"></span></p>
+    <p><strong data-key="crop">Crop:</strong> <span id="crop"></span></p>
+    <p><strong data-key="fertilizer">Fertilizer:</strong> <span id="fertilizer"></span></p>
+</section>
 
-    chart.update();
-}
+<section>
+    <canvas id="sensorChart"></canvas>
+</section>
 
-setInterval(fetchData, 5000);
-fetchData();
-</script>
+<script src="/static/translations.js"></script>
+<script src="/static/dashboard.js"></script>
 
 </body>
 </html>
