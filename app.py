@@ -1,17 +1,47 @@
 import os
+import requests
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
 
 app = Flask(__name__)
 
-# Get API key from Render Environment
+# ==============================
+# 🔐 Security Keys
+# ==============================
 API_KEY = os.environ.get("API_KEY")
+WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
 
 if not API_KEY:
-    print("⚠ WARNING: API_KEY not set in environment variables!")
+    print("⚠ WARNING: API_KEY not set!")
+
+if not WEATHER_API_KEY:
+    print("⚠ WARNING: WEATHER_API_KEY not set!")
 
 sensor_history = []
 
+# ==============================
+# 🌦 Get Real Weather Data
+# ==============================
+def get_weather():
+    city = "Vijayawada,IN"
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+
+    try:
+        response = requests.get(url, timeout=5)
+        data = response.json()
+
+        return {
+            "temperature": data["main"]["temp"],
+            "humidity": data["main"]["humidity"],
+            "pressure": data["main"]["pressure"]
+        }
+    except:
+        # fallback values
+        return {
+            "temperature": 30,
+            "humidity": 60,
+            "pressure": 1000
+        }
 
 # ==============================
 # 🌐 Dashboard Page
@@ -20,16 +50,13 @@ sensor_history = []
 def dashboard():
     return render_template("dashboard.html")
 
-
 # ==============================
 # 🔐 Secure Sensor Endpoint
 # ==============================
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
 
-    api_key_header = request.headers.get("x-api-key")
-
-    if not api_key_header or api_key_header != API_KEY:
+    if request.headers.get("x-api-key") != API_KEY:
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
@@ -38,15 +65,20 @@ def receive_sensor():
         return jsonify({"error": "No data received"}), 400
 
     moisture = data.get("moisture", 0)
-    temperature = data.get("temperature", 0)
-    humidity = data.get("humidity", 0)
 
-    # 🌱 Crop Recommendation Logic
-    if moisture < 400:
+    # 🌦 Get real weather
+    weather = get_weather()
+    temperature = weather["temperature"]
+    humidity = weather["humidity"]
+
+    # ==============================
+    # 🌱 Smart Crop Recommendation
+    # ==============================
+    if moisture < 400 and humidity > 60:
         soil_condition = "Wet"
         crop = "Rice"
         fertilizer = "Urea + DAP"
-    elif moisture < 700:
+    elif moisture < 700 and temperature > 25:
         soil_condition = "Moderate"
         crop = "Maize"
         fertilizer = "NPK 20-20-20"
@@ -100,7 +132,7 @@ def predict_yield():
     land = float(data.get("land", 0))
     crop = data.get("crop", "")
 
-    # Base average yield per acre (simple logic)
+    # Average yield per acre (can improve later with ML)
     if crop == "Rice":
         avg_yield = 30
     elif crop == "Maize":
