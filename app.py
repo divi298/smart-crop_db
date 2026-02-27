@@ -1,10 +1,12 @@
 import os
 import requests
 import sqlite3
+import joblib
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
 from database import init_db
 
+# Initialize DB
 init_db()
 
 app = Flask(__name__)
@@ -15,15 +17,13 @@ app = Flask(__name__)
 API_KEY = os.environ.get("API_KEY")
 WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
 
-if not API_KEY:
-    print("⚠ WARNING: API_KEY not set!")
-
-if not WEATHER_API_KEY:
-    print("⚠ WARNING: WEATHER_API_KEY not set!")
-
+# ==============================
+# 🤖 Load ML Model
+# ==============================
+model = joblib.load("crop_model.pkl")
 
 # ==============================
-# 🌦 Get Real Weather Data
+# 🌦 Weather API
 # ==============================
 def get_weather():
     city = "Vijayawada,IN"
@@ -48,12 +48,10 @@ def get_weather():
         return {
             "temperature": data["main"]["temp"],
             "humidity": data["main"]["humidity"],
-            "pressure": data["main"]["pressure"],
             "rainfall": rainfall
         }
 
-    except Exception as e:
-        print("Weather API Error:", e)
+    except:
         return fallback_weather()
 
 
@@ -61,13 +59,12 @@ def fallback_weather():
     return {
         "temperature": 30,
         "humidity": 60,
-        "pressure": 1000,
         "rainfall": 0
     }
 
 
 # ==============================
-# 🌐 Dashboard Page
+# 🌐 Dashboard
 # ==============================
 @app.route("/")
 def dashboard():
@@ -90,39 +87,44 @@ def receive_sensor():
 
     moisture = data.get("moisture", 0)
 
-    # 🌦 Get real weather
+    # 🌦 Get weather
     weather = get_weather()
     temperature = weather["temperature"]
     humidity = weather["humidity"]
     rainfall = weather["rainfall"]
 
     # ==============================
-    # 🌱 Smart Crop Recommendation Logic
+    # 🧪 Simulated Soil Data (District-based)
     # ==============================
-    if moisture < 400 and rainfall > 2:
-        soil_condition = "Very Wet"
-        crop = "Rice"
-        fertilizer = "Urea + DAP"
+    district_soil = {
+        "N": 65,
+        "P": 50,
+        "K": 45,
+        "ph": 6.5
+    }
 
-    elif 400 <= moisture < 700 and temperature > 25:
-        soil_condition = "Moderate"
-        crop = "Maize"
-        fertilizer = "NPK 20-20-20"
+    # ==============================
+    # 🤖 ML Prediction
+    # ==============================
+    features = [[
+        district_soil["N"],
+        district_soil["P"],
+        district_soil["K"],
+        temperature,
+        humidity,
+        district_soil["ph"],
+        rainfall
+    ]]
 
-    elif moisture >= 700 and rainfall < 1:
-        soil_condition = "Dry"
-        crop = "Millet"
-        fertilizer = "Compost + Potash"
+    predicted_crop = model.predict(features)[0]
 
-    else:
-        soil_condition = "Normal"
-        crop = "Groundnut"
-        fertilizer = "Balanced NPK"
+    soil_condition = "Predicted using ML Model"
+    fertilizer = "Apply based on soil test recommendation"
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # ==============================
-    # 💾 INSERT INTO DATABASE  ✅
+    # 💾 Store in Database
     # ==============================
     conn = sqlite3.connect("agri.db")
     cursor = conn.cursor()
@@ -131,21 +133,28 @@ def receive_sensor():
         INSERT INTO sensor_data 
         (moisture, temperature, humidity, rainfall, crop, timestamp)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (moisture, temperature, humidity, rainfall, crop, timestamp))
+    """, (
+        moisture,
+        temperature,
+        humidity,
+        rainfall,
+        predicted_crop,
+        timestamp
+    ))
 
     conn.commit()
     conn.close()
 
     return jsonify({
         "status": "success",
+        "recommended_crop": predicted_crop,
         "soil_condition": soil_condition,
-        "recommended_crop": crop,
         "recommended_fertilizer": fertilizer
     }), 200
 
 
 # ==============================
-# 📊 Dashboard Data API (Now Reads from DB)
+# 📊 History API
 # ==============================
 @app.route("/history", methods=["GET"])
 def history():
@@ -153,9 +162,13 @@ def history():
     conn = sqlite3.connect("agri.db")
     cursor = conn.cursor()
 
-    cursor.execute("SELECT moisture, temperature, humidity, rainfall, crop, timestamp FROM sensor_data ORDER BY id DESC LIMIT 50")
-    rows = cursor.fetchall()
+    cursor.execute("""
+        SELECT moisture, temperature, humidity, rainfall, crop, timestamp 
+        FROM sensor_data 
+        ORDER BY id DESC LIMIT 50
+    """)
 
+    rows = cursor.fetchall()
     conn.close()
 
     data = []
@@ -173,7 +186,7 @@ def history():
 
 
 # ==============================
-# 🌾 Yield Prediction API
+# 🌾 Yield Prediction
 # ==============================
 @app.route("/predict_yield", methods=["POST"])
 def predict_yield():
@@ -187,13 +200,13 @@ def predict_yield():
     crop = data.get("crop", "")
 
     base_yields = {
-        "Rice": 30,
-        "Maize": 25,
-        "Millet": 18,
-        "Groundnut": 20
+        "rice": 30,
+        "maize": 25,
+        "millet": 18,
+        "groundnut": 20
     }
 
-    avg_yield = base_yields.get(crop, 20)
+    avg_yield = base_yields.get(crop.lower(), 20)
     predicted_yield = round(land * avg_yield, 2)
 
     return jsonify({
@@ -205,7 +218,7 @@ def predict_yield():
 
 
 # ==============================
-# 🚀 Render Production Config
+# 🚀 Production Config
 # ==============================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

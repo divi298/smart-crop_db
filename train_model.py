@@ -1,30 +1,30 @@
 import pandas as pd
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 import joblib
 
-# Create simple demo dataset
-data = {
-    "soil": [1, 1, 0, 0, 1, 0, 1, 0],
-    "temperature": [30, 28, 35, 33, 26, 38, 29, 31],
-    "humidity": [80, 75, 40, 35, 70, 30, 85, 45],
-    "crop": ["Rice", "Rice", "Millet", "Millet", "Rice", "Millet", "Rice", "Millet"]
-}
+# Load dataset
+data = pd.read_csv("Crop_recommendation.csv")
 
-df = pd.DataFrame(data)
+# Features and target
+X = data.drop("label", axis=1)
+y = data["label"]
 
-X = df[["soil", "temperature", "humidity"]]
-y = df["crop"]
+# Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-le = LabelEncoder()
-y_encoded = le.fit_transform(y)
+# Train model
+model = RandomForestClassifier(n_estimators=100)
+model.fit(X_train, y_train)
 
-model = RandomForestClassifier()
-model.fit(X, y_encoded)
+# Accuracy check
+y_pred = model.predict(X_test)
+print("Model Accuracy:", accuracy_score(y_test, y_pred))
 
-# Save model and encoder
+# Save model
 joblib.dump(model, "crop_model.pkl")
-joblib.dump(le, "label_encoder.pkl")
 
-print("Model trained and saved successfully!")
+print("Model saved as crop_model.pkl")
