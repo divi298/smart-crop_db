@@ -1,7 +1,11 @@
 import os
 import requests
+import sqlite3
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
+from database import init_db
+
+init_db()
 
 app = Flask(__name__)
 
@@ -17,7 +21,6 @@ if not API_KEY:
 if not WEATHER_API_KEY:
     print("⚠ WARNING: WEATHER_API_KEY not set!")
 
-sensor_history = []
 
 # ==============================
 # 🌦 Get Real Weather Data
@@ -62,12 +65,14 @@ def fallback_weather():
         "rainfall": 0
     }
 
+
 # ==============================
 # 🌐 Dashboard Page
 # ==============================
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
+
 
 # ==============================
 # 🔐 Secure Sensor Endpoint
@@ -94,7 +99,6 @@ def receive_sensor():
     # ==============================
     # 🌱 Smart Crop Recommendation Logic
     # ==============================
-
     if moisture < 400 and rainfall > 2:
         soil_condition = "Very Wet"
         crop = "Rice"
@@ -115,21 +119,22 @@ def receive_sensor():
         crop = "Groundnut"
         fertilizer = "Balanced NPK"
 
-    record = {
-        "moisture": moisture,
-        "temperature": temperature,
-        "humidity": humidity,
-        "rainfall": rainfall,
-        "soil_condition": soil_condition,
-        "recommended_crop": crop,
-        "recommended_fertilizer": fertilizer,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    sensor_history.append(record)
+    # ==============================
+    # 💾 INSERT INTO DATABASE  ✅
+    # ==============================
+    conn = sqlite3.connect("agri.db")
+    cursor = conn.cursor()
 
-    if len(sensor_history) > 50:
-        sensor_history.pop(0)
+    cursor.execute("""
+        INSERT INTO sensor_data 
+        (moisture, temperature, humidity, rainfall, crop, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (moisture, temperature, humidity, rainfall, crop, timestamp))
+
+    conn.commit()
+    conn.close()
 
     return jsonify({
         "status": "success",
@@ -138,12 +143,34 @@ def receive_sensor():
         "recommended_fertilizer": fertilizer
     }), 200
 
+
 # ==============================
-# 📊 Dashboard Data API
+# 📊 Dashboard Data API (Now Reads from DB)
 # ==============================
 @app.route("/history", methods=["GET"])
 def history():
-    return jsonify(sensor_history)
+
+    conn = sqlite3.connect("agri.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT moisture, temperature, humidity, rainfall, crop, timestamp FROM sensor_data ORDER BY id DESC LIMIT 50")
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    data = []
+    for row in rows:
+        data.append({
+            "moisture": row[0],
+            "temperature": row[1],
+            "humidity": row[2],
+            "rainfall": row[3],
+            "recommended_crop": row[4],
+            "timestamp": row[5]
+        })
+
+    return jsonify(data)
+
 
 # ==============================
 # 🌾 Yield Prediction API
@@ -159,7 +186,6 @@ def predict_yield():
     land = float(data.get("land", 0))
     crop = data.get("crop", "")
 
-    # Improved Yield Logic
     base_yields = {
         "Rice": 30,
         "Maize": 25,
@@ -168,7 +194,6 @@ def predict_yield():
     }
 
     avg_yield = base_yields.get(crop, 20)
-
     predicted_yield = round(land * avg_yield, 2)
 
     return jsonify({
