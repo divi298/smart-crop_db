@@ -24,24 +24,43 @@ sensor_history = []
 # ==============================
 def get_weather():
     city = "Vijayawada,IN"
+
+    if not WEATHER_API_KEY:
+        return fallback_weather()
+
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
 
     try:
         response = requests.get(url, timeout=5)
+
+        if response.status_code != 200:
+            return fallback_weather()
+
         data = response.json()
+
+        rainfall = 0
+        if "rain" in data and "1h" in data["rain"]:
+            rainfall = data["rain"]["1h"]
 
         return {
             "temperature": data["main"]["temp"],
             "humidity": data["main"]["humidity"],
-            "pressure": data["main"]["pressure"]
+            "pressure": data["main"]["pressure"],
+            "rainfall": rainfall
         }
-    except:
-        # fallback values
-        return {
-            "temperature": 30,
-            "humidity": 60,
-            "pressure": 1000
-        }
+
+    except Exception as e:
+        print("Weather API Error:", e)
+        return fallback_weather()
+
+
+def fallback_weather():
+    return {
+        "temperature": 30,
+        "humidity": 60,
+        "pressure": 1000,
+        "rainfall": 0
+    }
 
 # ==============================
 # 🌐 Dashboard Page
@@ -70,27 +89,37 @@ def receive_sensor():
     weather = get_weather()
     temperature = weather["temperature"]
     humidity = weather["humidity"]
+    rainfall = weather["rainfall"]
 
     # ==============================
-    # 🌱 Smart Crop Recommendation
+    # 🌱 Smart Crop Recommendation Logic
     # ==============================
-    if moisture < 400 and humidity > 60:
-        soil_condition = "Wet"
+
+    if moisture < 400 and rainfall > 2:
+        soil_condition = "Very Wet"
         crop = "Rice"
         fertilizer = "Urea + DAP"
-    elif moisture < 700 and temperature > 25:
+
+    elif 400 <= moisture < 700 and temperature > 25:
         soil_condition = "Moderate"
         crop = "Maize"
         fertilizer = "NPK 20-20-20"
-    else:
+
+    elif moisture >= 700 and rainfall < 1:
         soil_condition = "Dry"
         crop = "Millet"
         fertilizer = "Compost + Potash"
+
+    else:
+        soil_condition = "Normal"
+        crop = "Groundnut"
+        fertilizer = "Balanced NPK"
 
     record = {
         "moisture": moisture,
         "temperature": temperature,
         "humidity": humidity,
+        "rainfall": rainfall,
         "soil_condition": soil_condition,
         "recommended_crop": crop,
         "recommended_fertilizer": fertilizer,
@@ -109,14 +138,12 @@ def receive_sensor():
         "recommended_fertilizer": fertilizer
     }), 200
 
-
 # ==============================
 # 📊 Dashboard Data API
 # ==============================
 @app.route("/history", methods=["GET"])
 def history():
     return jsonify(sensor_history)
-
 
 # ==============================
 # 🌾 Yield Prediction API
@@ -132,17 +159,17 @@ def predict_yield():
     land = float(data.get("land", 0))
     crop = data.get("crop", "")
 
-    # Average yield per acre (can improve later with ML)
-    if crop == "Rice":
-        avg_yield = 30
-    elif crop == "Maize":
-        avg_yield = 25
-    elif crop == "Millet":
-        avg_yield = 18
-    else:
-        avg_yield = 20
+    # Improved Yield Logic
+    base_yields = {
+        "Rice": 30,
+        "Maize": 25,
+        "Millet": 18,
+        "Groundnut": 20
+    }
 
-    predicted_yield = land * avg_yield
+    avg_yield = base_yields.get(crop, 20)
+
+    predicted_yield = round(land * avg_yield, 2)
 
     return jsonify({
         "land": land,
