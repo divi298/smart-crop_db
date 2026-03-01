@@ -87,16 +87,49 @@
 </section>
 
 <script>
+    
+const cropTranslations = {
+    "rice": { te: "వరి", hi: "धान" },
+    "maize": { te: "మొక్కజొన్న", hi: "मक्का" },
+    "millet": { te: "సజ్జ", hi: "बाजरा" },
+    "groundnut": { te: "పల్లీలు", hi: "मूंगफली" },
+    "muskmelon": { te: "కర్బూజ", hi: "खरबूजा" },
+    "cotton": { te: "పత్తి", hi: "कपास" },
+    "banana": { te: "అరటి", hi: "केला" }
+};
+
+const soilTranslations = {
+    "wet": { te: "తడి", hi: "गीली" },
+    "moderate": { te: "మధ్యస్థ", hi: "मध्यम" },
+    "dry": { te: "ఎండిన", hi: "सूखी" }
+};
+
 function speakRecommendation() {
 
-    const crop = document.getElementById("crop").innerText;
-    const fertilizer = document.getElementById("fertilizer").innerText;
-    const soil = document.getElementById("soil").innerText;
+    let crop = document.getElementById("crop").innerText.toLowerCase();
+    let fertilizer = document.getElementById("fertilizer").innerText;
+    let soil = document.getElementById("soil").innerText.toLowerCase();
     const selectedLang = document.getElementById("languageSwitcher").value;
 
     if (crop === "--") {
         alert("Recommendation not available yet.");
         return;
+    }
+
+    // Translate crop
+    if (selectedLang === "te" && cropTranslations[crop]) {
+        crop = cropTranslations[crop].te;
+    }
+    if (selectedLang === "hi" && cropTranslations[crop]) {
+        crop = cropTranslations[crop].hi;
+    }
+
+    // Translate soil
+    if (selectedLang === "te" && soilTranslations[soil]) {
+        soil = soilTranslations[soil].te;
+    }
+    if (selectedLang === "hi" && soilTranslations[soil]) {
+        soil = soilTranslations[soil].hi;
     }
 
     let message = "";
@@ -113,25 +146,10 @@ function speakRecommendation() {
 
     const speech = new SpeechSynthesisUtterance(message);
 
-    const voices = window.speechSynthesis.getVoices();
-    let selectedVoice = null;
-
-    if (selectedLang === "te") {
-        selectedVoice = voices.find(v => v.lang.includes("te"));
-    }
-    else if (selectedLang === "hi") {
-        selectedVoice = voices.find(v => v.lang.includes("hi"));
-    }
-    else {
-        selectedVoice = voices.find(v => v.lang.includes("en"));
-    }
-
-    if (selectedVoice) {
-        speech.voice = selectedVoice;
-    }
-
-    speech.rate = 0.9;
-    speech.pitch = 1;
+    speech.lang =
+        selectedLang === "te" ? "te-IN" :
+        selectedLang === "hi" ? "hi-IN" :
+        "en-IN";
 
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(speech);
