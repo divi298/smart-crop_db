@@ -7,22 +7,29 @@ import joblib
 # Load dataset
 data = pd.read_csv("Crop_recommendation.csv")
 
+print("Dataset shape:", data.shape)
+print("Columns:", data.columns)
+
 # Features and target
 X = data.drop("label", axis=1)
 y = data["label"]
 
-# Split
+# Split data
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
 # Train model
-model = RandomForestClassifier(n_estimators=100)
+model = RandomForestClassifier(
+    n_estimators=200,
+    random_state=42
+)
 model.fit(X_train, y_train)
 
 # Accuracy check
 y_pred = model.predict(X_test)
-print("Model Accuracy:", accuracy_score(y_test, y_pred))
+accuracy = accuracy_score(y_test, y_pred)
+print("Model Accuracy:", round(accuracy * 100, 2), "%")
 
 # Save model
 joblib.dump(model, "crop_model.pkl")
