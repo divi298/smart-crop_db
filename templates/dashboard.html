@@ -27,17 +27,17 @@
 
 <section class="cards">
     <div class="card">
-        <h3 data-key="moisture">Moisture</h3>
+        <h3>Moisture</h3>
         <p id="moistureValue">--</p>
     </div>
 
     <div class="card">
-        <h3 data-key="temperature">Temperature</h3>
+        <h3>Temperature</h3>
         <p id="temperatureValue">--</p>
     </div>
 
     <div class="card">
-        <h3 data-key="humidity">Humidity</h3>
+        <h3>Humidity</h3>
         <p id="humidityValue">--</p>
     </div>
 </section>
@@ -46,21 +46,26 @@
 <!-- 🌾 CROP RECOMMENDATION -->
 <!-- ========================= -->
 <section class="section-title">
-    <h2 data-key="recommendation">🌾 Crop Recommendation</h2>
+    <h2>🌾 Crop Recommendation</h2>
 </section>
 
 <section class="recommendation">
-    <p><strong data-key="soil">Soil Condition:</strong>
+    <p><strong>Soil Condition:</strong>
         <span id="soil">--</span>
     </p>
 
-    <p><strong data-key="crop">Recommended Crop:</strong>
+    <p><strong>Recommended Crop:</strong>
         <span id="crop">--</span>
     </p>
 
-    <p><strong data-key="fertilizer">Fertilizer:</strong>
+    <p><strong>Fertilizer:</strong>
         <span id="fertilizer">--</span>
     </p>
+
+    <!-- 🔊 VOICE BUTTON -->
+    <div style="margin-top:20px;">
+        <button onclick="speakRecommendation()">🔊 Hear Recommendation</button>
+    </div>
 </section>
 
 <!-- ========================= -->
@@ -93,6 +98,48 @@
 <section class="chart-section">
     <canvas id="sensorChart"></canvas>
 </section>
+
+<!-- ========================= -->
+<!-- 🎙 VOICE SCRIPT -->
+<!-- ========================= -->
+<script>
+function speakRecommendation() {
+
+    const crop = document.getElementById("crop").innerText;
+    const fertilizer = document.getElementById("fertilizer").innerText;
+    const soil = document.getElementById("soil").innerText;
+    const selectedLang = document.getElementById("languageSwitcher").value;
+
+    if (crop === "--") {
+        alert("Recommendation not available yet.");
+        return;
+    }
+
+    let message = "";
+
+    if (selectedLang === "te") {
+        message = `సిఫారసు చేసిన పంట ${crop}. నేల పరిస్థితి ${soil}. ఎరువు ${fertilizer} వాడండి.`;
+    }
+    else if (selectedLang === "hi") {
+        message = `अनुशंसित फसल ${crop} है। मिट्टी की स्थिति ${soil} है। उर्वरक ${fertilizer} का उपयोग करें।`;
+    }
+    else {
+        message = `Recommended crop is ${crop}. Soil condition is ${soil}. Use fertilizer ${fertilizer}.`;
+    }
+
+    const speech = new SpeechSynthesisUtterance(message);
+
+    if (selectedLang === "te") speech.lang = "te-IN";
+    else if (selectedLang === "hi") speech.lang = "hi-IN";
+    else speech.lang = "en-IN";
+
+    speech.rate = 0.9;
+    speech.pitch = 1;
+
+    window.speechSynthesis.cancel(); // stop previous speech
+    window.speechSynthesis.speak(speech);
+}
+</script>
 
 <script src="/static/translations.js"></script>
 <script src="/static/dashboard.js"></script>
