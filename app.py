@@ -7,20 +7,24 @@ from database import init_db
 
 app = Flask(__name__)
 
-# Initialize database
+# ==============================
+# 💾 Initialize Database
+# ==============================
 init_db()
 
-# Load ML Model
+# ==============================
+# 🤖 Load ML Model
+# ==============================
 try:
     model = joblib.load("crop_model.pkl")
     print("✅ Model loaded successfully")
-except:
-    print("❌ Model failed to load")
+except Exception as e:
+    print("❌ Model failed to load:", e)
     model = None
 
 
 # ==============================
-# 🌐 Dashboard
+# 🌐 Dashboard Route
 # ==============================
 @app.route("/")
 def dashboard():
@@ -28,7 +32,7 @@ def dashboard():
 
 
 # ==============================
-# 🔥 Sensor Endpoint
+# 🔥 Sensor Endpoint (ESP sends data here)
 # ==============================
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
@@ -40,12 +44,14 @@ def receive_sensor():
 
     moisture = data.get("moisture", 0)
 
-    # Dummy environmental values
+    # Dummy environmental values (can upgrade later)
     temperature = 30
     humidity = 60
     rainfall = 0
 
-    # Soil condition
+    # ----------------------------
+    # Soil Condition Logic
+    # ----------------------------
     if moisture < 400:
         soil_condition = "Wet"
     elif moisture < 700:
@@ -53,14 +59,19 @@ def receive_sensor():
     else:
         soil_condition = "Dry"
 
-    # ML prediction
+    # ----------------------------
+    # ML Crop Prediction
+    # ----------------------------
     if model:
+        # Replace with real features later
         features = [[65, 50, 45, temperature, humidity, 6.5, rainfall]]
         predicted_crop = model.predict(features)[0]
     else:
         predicted_crop = "Maize"
 
-    # Fertilizer mapping
+    # ----------------------------
+    # Fertilizer Mapping
+    # ----------------------------
     fertilizer_map = {
         "rice": "Urea + DAP",
         "maize": "NPK 20-20-20",
@@ -78,7 +89,9 @@ def receive_sensor():
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Insert into DB
+    # ----------------------------
+    # Insert Into Database
+    # ----------------------------
     conn = sqlite3.connect("agri.db")
     cursor = conn.cursor()
 
@@ -110,7 +123,7 @@ def receive_sensor():
 
 
 # ==============================
-# 📊 History API
+# 📊 History API (Dashboard fetches this)
 # ==============================
 @app.route("/history")
 def history():
@@ -142,6 +155,44 @@ def history():
 
     return jsonify(data)
 
+
+# ==============================
+# 📈 Yield Prediction API
+# ==============================
+@app.route("/predict_yield", methods=["POST"])
+def predict_yield():
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    land = float(data.get("land", 0))
+    crop = data.get("crop", "")
+
+    base_yields = {
+        "rice": 30,
+        "maize": 25,
+        "millet": 18,
+        "groundnut": 20,
+        "muskmelon": 22,
+        "cotton": 28,
+        "banana": 35
+    }
+
+    avg_yield = base_yields.get(crop.lower(), 20)
+
+    predicted_yield = round(land * avg_yield, 2)
+
+    return jsonify({
+        "predicted_yield": predicted_yield,
+        "unit": "quintals"
+    })
+
+
+# ==============================
+# 🚀 Render Production Config
+# ==============================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
