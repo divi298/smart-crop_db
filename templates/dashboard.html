@@ -103,28 +103,45 @@ const soilTranslations = {
     "moderate": { te: "మధ్యస్థ", hi: "मध्यम" },
     "dry": { te: "ఎండిన", hi: "सूखी" }
 };
+
 function speakRecommendation() {
 
-    const cropText = document.getElementById("crop").innerText.trim();
-    const fertilizerText = document.getElementById("fertilizer").innerText.trim();
-    const soilText = document.getElementById("soil").innerText.trim();
+    let crop = document.getElementById("crop").innerText.toLowerCase();
+    let fertilizer = document.getElementById("fertilizer").innerText;
+    let soil = document.getElementById("soil").innerText.toLowerCase();
     const selectedLang = document.getElementById("languageSwitcher").value;
 
-    if (!cropText || cropText === "--") {
+    if (crop === "--") {
         alert("Recommendation not available yet.");
         return;
+    }
+
+    // Translate crop
+    if (selectedLang === "te" && cropTranslations[crop]) {
+        crop = cropTranslations[crop].te;
+    }
+    if (selectedLang === "hi" && cropTranslations[crop]) {
+        crop = cropTranslations[crop].hi;
+    }
+
+    // Translate soil
+    if (selectedLang === "te" && soilTranslations[soil]) {
+        soil = soilTranslations[soil].te;
+    }
+    if (selectedLang === "hi" && soilTranslations[soil]) {
+        soil = soilTranslations[soil].hi;
     }
 
     let message = "";
 
     if (selectedLang === "te") {
-        message = `సిఫారసు చేసిన పంట ${cropText}. నేల పరిస్థితి ${soilText}. ఎరువు ${fertilizerText} వాడండి.`;
+        message = `సిఫారసు చేసిన పంట ${crop}. నేల పరిస్థితి ${soil}. ఎరువు ${fertilizer} వాడండి.`;
     }
     else if (selectedLang === "hi") {
-        message = `अनुशंसित फसल ${cropText} है। मिट्टी की स्थिति ${soilText} है। उर्वरक ${fertilizerText} का उपयोग करें।`;
+        message = `अनुशंसित फसल ${crop} है। मिट्टी की स्थिति ${soil} है। उर्वरक ${fertilizer} का उपयोग करें।`;
     }
     else {
-        message = `Recommended crop is ${cropText}. Soil condition is ${soilText}. Use fertilizer ${fertilizerText}.`;
+        message = `Recommended crop is ${crop}. Soil condition is ${soil}. Use fertilizer ${fertilizer}.`;
     }
 
     const speech = new SpeechSynthesisUtterance(message);
@@ -133,9 +150,6 @@ function speakRecommendation() {
         selectedLang === "te" ? "te-IN" :
         selectedLang === "hi" ? "hi-IN" :
         "en-IN";
-
-    speech.rate = 0.9;
-    speech.pitch = 1;
 
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(speech);
