@@ -130,14 +130,27 @@ function speakRecommendation() {
 
     const speech = new SpeechSynthesisUtterance(message);
 
-    if (selectedLang === "te") speech.lang = "te-IN";
-    else if (selectedLang === "hi") speech.lang = "hi-IN";
-    else speech.lang = "en-IN";
+    const voices = window.speechSynthesis.getVoices();
+    let selectedVoice = null;
+
+    if (selectedLang === "te") {
+        selectedVoice = voices.find(v => v.lang.includes("te"));
+    }
+    else if (selectedLang === "hi") {
+        selectedVoice = voices.find(v => v.lang.includes("hi"));
+    }
+    else {
+        selectedVoice = voices.find(v => v.lang.includes("en"));
+    }
+
+    if (selectedVoice) {
+        speech.voice = selectedVoice;
+    }
 
     speech.rate = 0.9;
     speech.pitch = 1;
 
-    window.speechSynthesis.cancel(); // stop previous speech
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(speech);
 }
 </script>
