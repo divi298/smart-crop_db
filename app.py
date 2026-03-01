@@ -3,42 +3,21 @@ import sqlite3
 import joblib
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
+from database import init_db
 
 app = Flask(__name__)
 
-# ==============================
-# 💾 Initialize Database
-# ==============================
-def init_db():
-    conn = sqlite3.connect("agri.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS sensor_data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            moisture INTEGER,
-            temperature REAL,
-            humidity REAL,
-            rainfall REAL,
-            soil_condition TEXT,
-            crop TEXT,
-            fertilizer TEXT,
-            timestamp TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
+# Initialize database
 init_db()
 
-# ==============================
-# 🤖 Load ML Model
-# ==============================
+# Load ML Model
 try:
     model = joblib.load("crop_model.pkl")
     print("✅ Model loaded successfully")
-except Exception as e:
-    print("❌ Model failed to load:", e)
+except:
+    print("❌ Model failed to load")
     model = None
+
 
 # ==============================
 # 🌐 Dashboard
@@ -46,6 +25,7 @@ except Exception as e:
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
+
 
 # ==============================
 # 🔥 Sensor Endpoint
@@ -60,14 +40,12 @@ def receive_sensor():
 
     moisture = data.get("moisture", 0)
 
-    # Dummy weather (you can replace later)
+    # Dummy environmental values
     temperature = 30
     humidity = 60
     rainfall = 0
 
-    # ==============================
-    # 🌱 Soil Condition Logic
-    # ==============================
+    # Soil condition
     if moisture < 400:
         soil_condition = "Wet"
     elif moisture < 700:
@@ -75,19 +53,14 @@ def receive_sensor():
     else:
         soil_condition = "Dry"
 
-    # ==============================
-    # 🤖 ML Crop Prediction
-    # ==============================
+    # ML prediction
     if model:
-        # Replace with real features later
         features = [[65, 50, 45, temperature, humidity, 6.5, rainfall]]
         predicted_crop = model.predict(features)[0]
     else:
         predicted_crop = "Maize"
 
-    # ==============================
-    # 🌾 Fertilizer Mapping
-    # ==============================
+    # Fertilizer mapping
     fertilizer_map = {
         "rice": "Urea + DAP",
         "maize": "NPK 20-20-20",
@@ -98,22 +71,21 @@ def receive_sensor():
         "banana": "NPK 14-14-14"
     }
 
-    recommended_fertilizer = fertilizer_map.get(
+    fertilizer = fertilizer_map.get(
         predicted_crop.lower(),
         "Balanced NPK"
     )
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # ==============================
-    # 💾 Insert Into Database
-    # ==============================
+    # Insert into DB
     conn = sqlite3.connect("agri.db")
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO sensor_data 
-        (moisture, temperature, humidity, rainfall, soil_condition, crop, fertilizer, timestamp)
+        INSERT INTO sensor_data
+        (moisture, temperature, humidity, rainfall,
+         soil_condition, crop, fertilizer, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         moisture,
@@ -122,7 +94,7 @@ def receive_sensor():
         rainfall,
         soil_condition,
         predicted_crop,
-        recommended_fertilizer,
+        fertilizer,
         timestamp
     ))
 
@@ -133,8 +105,9 @@ def receive_sensor():
         "status": "success",
         "soil_condition": soil_condition,
         "recommended_crop": predicted_crop,
-        "recommended_fertilizer": recommended_fertilizer
-    }), 200
+        "recommended_fertilizer": fertilizer
+    })
+
 
 # ==============================
 # 📊 History API
@@ -146,7 +119,8 @@ def history():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT moisture, temperature, humidity, rainfall, soil_condition, crop, fertilizer, timestamp
+        SELECT moisture, temperature, humidity, rainfall,
+               soil_condition, crop, fertilizer, timestamp
         FROM sensor_data
         ORDER BY id DESC
         LIMIT 50
@@ -168,8 +142,6 @@ def history():
 
     return jsonify(data)
 
-# ==============================
-# 🚀 Run Server
-# ==============================
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

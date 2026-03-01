@@ -11,7 +11,9 @@ def init_db():
             temperature REAL,
             humidity REAL,
             rainfall REAL,
+            soil_condition TEXT,
             crop TEXT,
+            fertilizer TEXT,
             timestamp TEXT
         )
     """)
