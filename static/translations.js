@@ -43,8 +43,15 @@ const translations = {
 };
 
 function changeLanguage(lang) {
+
+    // 🔹 Translate static labels
     document.querySelectorAll("[data-key]").forEach(element => {
         const key = element.getAttribute("data-key");
         element.innerText = translations[lang][key];
     });
+
+    // 🔹 Refresh dynamic recommendation values
+    if (typeof loadData === "function") {
+        loadData();
+    }
 }
