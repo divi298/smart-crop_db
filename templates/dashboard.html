@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='translations.js') }}"></script>
 </head>
 <body>
 
@@ -13,15 +12,12 @@
     <h1>🌱 Smart Crop IoT Dashboard</h1>
 
     <select id="languageSwitcher" onchange="changeLanguage(this.value)">
-    <option value="en">English</option>
-    <option value="hi">Hindi</option>
-    <option value="te">తెలుగు</option>
-</select>
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="te">తెలుగు</option>
+    </select>
 </header>
 
-<!-- ========================= -->
-<!-- 🌡 LIVE SENSOR STATUS -->
-<!-- ========================= -->
 <section class="section-title">
     <h2 data-key="live_status">📡 Live Field Status</h2>
 </section>
@@ -43,9 +39,6 @@
     </div>
 </section>
 
-<!-- ========================= -->
-<!-- 🌾 CROP RECOMMENDATION -->
-<!-- ========================= -->
 <section class="section-title">
     <h2 data-key="crop_rec">🌾 Crop Recommendation</h2>
 </section>
@@ -63,15 +56,11 @@
         <span id="fertilizer">--</span>
     </p>
 
-    <!-- 🔊 VOICE BUTTON -->
     <div style="margin-top:20px;">
         <button onclick="speakRecommendation()">🔊 Hear Recommendation</button>
     </div>
 </section>
 
-<!-- ========================= -->
-<!-- 🌾 YIELD PREDICTION -->
-<!-- ========================= -->
 <section class="section-title">
     <h2 data-key="yield">📈 Yield Prediction</h2>
 </section>
@@ -89,9 +78,6 @@
     </div>
 </section>
 
-<!-- ========================= -->
-<!-- 📊 SENSOR TREND CHART -->
-<!-- ========================= -->
 <section class="section-title">
     <h2>📊 Moisture Trend</h2>
 </section>
@@ -100,9 +86,6 @@
     <canvas id="sensorChart"></canvas>
 </section>
 
-<!-- ========================= -->
-<!-- 🎙 VOICE SCRIPT -->
-<!-- ========================= -->
 <script>
 function speakRecommendation() {
 
@@ -155,8 +138,9 @@ function speakRecommendation() {
 }
 </script>
 
-<script src="/static/translations.js"></script>
-<script src="/static/dashboard.js"></script>
+<!-- LOAD SCRIPTS ONLY ONCE -->
+<script src="{{ url_for('static', filename='translations.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 
 </body>
 </html>
