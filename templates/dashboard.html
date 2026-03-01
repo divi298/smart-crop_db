@@ -85,51 +85,17 @@
 <section class="chart-section">
     <canvas id="sensorChart"></canvas>
 </section>
-
 <script>
-    
-const cropTranslations = {
-    "rice": { te: "వరి", hi: "धान" },
-    "maize": { te: "మొక్కజొన్న", hi: "मक्का" },
-    "millet": { te: "సజ్జ", hi: "बाजरा" },
-    "groundnut": { te: "పల్లీలు", hi: "मूंगफली" },
-    "muskmelon": { te: "కర్బూజ", hi: "खरबूजा" },
-    "cotton": { te: "పత్తి", hi: "कपास" },
-    "banana": { te: "అరటి", hi: "केला" }
-};
-
-const soilTranslations = {
-    "wet": { te: "తడి", hi: "गीली" },
-    "moderate": { te: "మధ్యస్థ", hi: "मध्यम" },
-    "dry": { te: "ఎండిన", hi: "सूखी" }
-};
-
 function speakRecommendation() {
 
-    let crop = document.getElementById("crop").innerText.toLowerCase();
-    let fertilizer = document.getElementById("fertilizer").innerText;
-    let soil = document.getElementById("soil").innerText.toLowerCase();
+    const crop = document.getElementById("crop").innerText.trim();
+    const fertilizer = document.getElementById("fertilizer").innerText.trim();
+    const soil = document.getElementById("soil").innerText.trim();
     const selectedLang = document.getElementById("languageSwitcher").value;
 
-    if (crop === "--") {
+    if (!crop || crop === "--") {
         alert("Recommendation not available yet.");
         return;
-    }
-
-    // Translate crop
-    if (selectedLang === "te" && cropTranslations[crop]) {
-        crop = cropTranslations[crop].te;
-    }
-    if (selectedLang === "hi" && cropTranslations[crop]) {
-        crop = cropTranslations[crop].hi;
-    }
-
-    // Translate soil
-    if (selectedLang === "te" && soilTranslations[soil]) {
-        soil = soilTranslations[soil].te;
-    }
-    if (selectedLang === "hi" && soilTranslations[soil]) {
-        soil = soilTranslations[soil].hi;
     }
 
     let message = "";
@@ -151,11 +117,13 @@ function speakRecommendation() {
         selectedLang === "hi" ? "hi-IN" :
         "en-IN";
 
+    speech.rate = 0.9;
+    speech.pitch = 1;
+
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(speech);
 }
 </script>
-
 <!-- LOAD SCRIPTS ONLY ONCE -->
 <script src="{{ url_for('static', filename='translations.js') }}"></script>
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
