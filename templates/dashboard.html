@@ -88,39 +88,40 @@
 <script>
 function speakRecommendation() {
 
+    if (window.speechSynthesis.speaking) return;
+
     const crop = document.getElementById("crop").innerText.trim();
-    const fertilizer = document.getElementById("fertilizer").innerText.trim();
+    const fertilizerRaw = document.getElementById("fertilizer").innerText.trim();
     const soil = document.getElementById("soil").innerText.trim();
     const selectedLang = document.getElementById("languageSwitcher").value;
 
-    if (!crop || crop === "--") {
-        alert("Recommendation not available yet.");
-        return;
-    }
+    if (!crop || crop === "--") return;
+
+    let fertilizer = fertilizerRaw
+        .replace(/NPK/gi, "N P K")
+        .replace(/-/g, " ");
 
     let message = "";
 
     if (selectedLang === "te") {
-        message = `సిఫారసు చేసిన పంట ${crop}. నేల పరిస్థితి ${soil}. ఎరువు ${fertilizer} వాడండి.`;
+        message = `సిఫారసు చేసిన పంట ${crop}. నేల పరిస్థితి ${soil}. ఎన్ పి కె ${fertilizer} ఎరువు వాడండి.`;
     }
     else if (selectedLang === "hi") {
-        message = `अनुशंसित फसल ${crop} है। मिट्टी की स्थिति ${soil} है। उर्वरक ${fertilizer} का उपयोग करें।`;
+        message = `अनुशंसित फसल ${crop} है। मिट्टी की स्थिति ${soil} है। एन पी के ${fertilizer} उर्वरक का उपयोग करें।`;
     }
     else {
         message = `Recommended crop is ${crop}. Soil condition is ${soil}. Use fertilizer ${fertilizer}.`;
     }
 
+    console.log("Speaking message:", message);
+
     const speech = new SpeechSynthesisUtterance(message);
 
-    speech.lang =
-        selectedLang === "te" ? "te-IN" :
-        selectedLang === "hi" ? "hi-IN" :
-        "en-IN";
+    speech.lang = selectedLang === "te" ? "te-IN" :
+                  selectedLang === "hi" ? "hi-IN" : "en-IN";
 
     speech.rate = 0.9;
-    speech.pitch = 1;
 
-    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(speech);
 }
 </script>
