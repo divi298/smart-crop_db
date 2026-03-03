@@ -4,7 +4,9 @@ import joblib
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
 from database import init_db
-
+from flask import send_file
+from gtts import gTTS
+import io
 app = Flask(__name__)
 
 # ==============================
@@ -184,11 +186,51 @@ def predict_yield():
 
     predicted_yield = round(land * avg_yield, 2)
 
+
+
     return jsonify({
         "predicted_yield": predicted_yield,
         "unit": "quintals"
     })
+# ==============================
+# 🔊 Voice Generation API (gTTS)
+# ==============================
+@app.route("/speak", methods=["POST"])
+def speak():
 
+    data = request.get_json()
+
+    crop = data.get("crop")
+    fertilizer = data.get("fertilizer")
+    soil = data.get("soil")
+    language = data.get("language")
+
+    if not crop:
+        return jsonify({"error": "No data"}), 400
+
+    # 🌍 Create message based on selected language
+    if language == "te":
+        message = f"సిఫారసు చేసిన పంట {crop}. నేల పరిస్థితి {soil}. ఎరువు {fertilizer} వాడండి."
+        lang_code = "te"
+    elif language == "hi":
+        message = f"अनुशंसित फसल {crop} है। मिट्टी की स्थिति {soil} है। उर्वरक {fertilizer} का उपयोग करें।"
+        lang_code = "hi"
+    else:
+        message = f"Recommended crop is {crop}. Soil condition is {soil}. Use fertilizer {fertilizer}."
+        lang_code = "en"
+
+    # 🎙 Generate voice using Google TTS
+    tts = gTTS(text=message, lang=lang_code)
+
+    audio_fp = io.BytesIO()
+    tts.write_to_fp(audio_fp)
+    audio_fp.seek(0)
+
+    return send_file(
+        audio_fp,
+        mimetype="audio/mpeg",
+        as_attachment=False
+    )
 
 # ==============================
 # 🚀 Render Production Config

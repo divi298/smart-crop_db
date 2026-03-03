@@ -88,75 +88,31 @@
 <script>
 function speakRecommendation() {
 
-    if (window.speechSynthesis.speaking) return;
-
     const crop = document.getElementById("crop").innerText.trim();
-    const fertilizerRaw = document.getElementById("fertilizer").innerText.trim();
+    const fertilizer = document.getElementById("fertilizer").innerText.trim();
     const soil = document.getElementById("soil").innerText.trim();
-    const selectedLang = document.getElementById("languageSwitcher").value;
+    const language = document.getElementById("languageSwitcher").value;
 
     if (!crop || crop === "--") return;
 
-    let fertilizer = fertilizerRaw
-        .replace(/NPK/gi, "N P K")
-        .replace(/-/g, " ");
-
-    let message = "";
-
-    if (selectedLang === "te") {
-        message = `సిఫారసు చేసిన పంట ${crop}. నేల పరిస్థితి ${soil}. ఎన్ పి కె ${fertilizer} ఎరువు వాడండి.`;
-    }
-    else if (selectedLang === "hi") {
-        message = `अनुशंसित फसल ${crop} है। मिट्टी की स्थिति ${soil} है। एन पी के ${fertilizer} उर्वरक का उपयोग करें।`;
-    }
-    else {
-        message = `Recommended crop is ${crop}. Soil condition is ${soil}. Use fertilizer ${fertilizer}.`;
-    }
-
-    console.log("Speaking message:", message);
-
-    const speech = new SpeechSynthesisUtterance(message);
-
-    // 🔥 Wait for voices to load properly
-    let voices = speechSynthesis.getVoices();
-
-    // Some browsers load voices asynchronously
-    if (voices.length === 0) {
-        speechSynthesis.onvoiceschanged = () => {
-            setVoiceAndSpeak();
-        };
-        return;
-    }
-
-    setVoiceAndSpeak();
-
-    function setVoiceAndSpeak() {
-        voices = speechSynthesis.getVoices();
-
-        let selectedVoice = null;
-
-        if (selectedLang === "te") {
-            selectedVoice = voices.find(v => v.lang.toLowerCase().includes("te"));
-        }
-        else if (selectedLang === "hi") {
-            selectedVoice = voices.find(v => v.lang.toLowerCase().includes("hi"));
-        }
-        else {
-            selectedVoice = voices.find(v => v.lang.toLowerCase().includes("en"));
-        }
-
-        if (selectedVoice) {
-            speech.voice = selectedVoice;
-            console.log("Using voice:", selectedVoice.name);
-        } else {
-            console.warn("No matching voice found. Using default voice.");
-        }
-
-        speech.rate = 0.9;
-
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(speech);
-    }
+    fetch("/speak", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            crop: crop,
+            fertilizer: fertilizer,
+            soil: soil,
+            language: language
+        })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const audioURL = URL.createObjectURL(blob);
+        const audio = new Audio(audioURL);
+        audio.play();
+    });
 }
 </script>
 <!-- LOAD SCRIPTS ONLY ONCE -->
