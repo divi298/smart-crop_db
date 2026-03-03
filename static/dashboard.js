@@ -29,69 +29,22 @@ function loadData() {
         .then(res => res.json())
         .then(data => {
 
+            console.log("History data:", data);
+
             if (!data || data.length === 0) {
-                console.log("No sensor data yet...");
                 return;
             }
 
+            // NEWEST RECORD
             let latest = data[0];
 
             document.getElementById("moistureValue").innerText = latest.moisture;
             document.getElementById("temperatureValue").innerText = latest.temperature;
             document.getElementById("humidityValue").innerText = latest.humidity;
 
-            let lang = document.getElementById("languageSwitcher").value;
-
-            let crop = latest.recommended_crop;
-            let soil = latest.soil_condition;
-            let fertilizer = latest.recommended_fertilizer;
-
-            // 🔹 Translate Crop
-            if (lang !== "en" && dynamicTranslations.crop[crop?.toLowerCase()]) {
-                crop = dynamicTranslations.crop[crop.toLowerCase()][lang] || crop;
-            }
-
-            // 🔹 Translate Soil
-            if (lang !== "en" && dynamicTranslations.soil[soil?.toLowerCase()]) {
-                soil = dynamicTranslations.soil[soil.toLowerCase()][lang] || soil;
-            }
-
-            document.getElementById("soil").innerText = soil;
-            document.getElementById("crop").innerText = crop;
-            document.getElementById("fertilizer").innerText = fertilizer;
-
-            // ======================================
-            // 🌈 INTERACTIVE FARMER ALERT SYSTEM
-            // ======================================
-
-            const moisture = latest.moisture;
-            const bar = document.getElementById("moistureBar");
-            const alertCard = document.getElementById("soilAlertCard");
-            const alertText = document.getElementById("soilAlertText");
-            const actionCard = document.getElementById("farmerAction");
-
-            // 🌡 Moisture Progress Bar
-            const percent = Math.min((moisture / 1023) * 100, 100);
-            if (bar) {
-                bar.style.width = percent + "%";
-            }
-
-            // 🌾 Soil Condition Visual Alerts
-            if (moisture < 400) {
-                alertCard.className = "soil-card soil-wet";
-                alertText.innerText = "💧 Soil is Wet – Do NOT water now";
-                actionCard.innerText = "⛔ Do not water. Soil already wet.";
-            }
-            else if (moisture < 700) {
-                alertCard.className = "soil-card soil-moderate";
-                alertText.innerText = "🌿 Soil is Perfect – Good condition";
-                actionCard.innerText = "✅ Soil moisture is balanced.";
-            }
-            else {
-                alertCard.className = "soil-card soil-dry";
-                alertText.innerText = "⚠ Soil is Dry – Water Immediately";
-                actionCard.innerText = "🚿 Please water your field today.";
-            }
+            document.getElementById("soil").innerText = latest.soil_condition;
+            document.getElementById("crop").innerText = latest.recommended_crop;
+            document.getElementById("fertilizer").innerText = latest.recommended_fertilizer;
 
             updateChart(data);
         })
@@ -99,7 +52,6 @@ function loadData() {
             console.error("Error fetching data:", error);
         });
 }
-
 // =====================================
 // 📈 Update Chart
 // =====================================
