@@ -1,15 +1,12 @@
 <body>
+<head>
+    <title>Smart Crop IoT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<header class="main-header">
-    <h1>🌱 Smart Crop IoT Dashboard</h1>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <select id="languageSwitcher" onchange="changeLanguage(this.value)">
-        <option value="en">English</option>
-        <option value="hi">Hindi</option>
-        <option value="te">తెలుగు</option>
-    </select>
-</header>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
 <!-- ========================= -->
 <!-- 🌡 LIVE FIELD STATUS -->
 <!-- ========================= -->
