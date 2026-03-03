@@ -117,12 +117,46 @@ function speakRecommendation() {
 
     const speech = new SpeechSynthesisUtterance(message);
 
-    speech.lang = selectedLang === "te" ? "te-IN" :
-                  selectedLang === "hi" ? "hi-IN" : "en-IN";
+    // 🔥 Wait for voices to load properly
+    let voices = speechSynthesis.getVoices();
 
-    speech.rate = 0.9;
+    // Some browsers load voices asynchronously
+    if (voices.length === 0) {
+        speechSynthesis.onvoiceschanged = () => {
+            setVoiceAndSpeak();
+        };
+        return;
+    }
 
-    window.speechSynthesis.speak(speech);
+    setVoiceAndSpeak();
+
+    function setVoiceAndSpeak() {
+        voices = speechSynthesis.getVoices();
+
+        let selectedVoice = null;
+
+        if (selectedLang === "te") {
+            selectedVoice = voices.find(v => v.lang.toLowerCase().includes("te"));
+        }
+        else if (selectedLang === "hi") {
+            selectedVoice = voices.find(v => v.lang.toLowerCase().includes("hi"));
+        }
+        else {
+            selectedVoice = voices.find(v => v.lang.toLowerCase().includes("en"));
+        }
+
+        if (selectedVoice) {
+            speech.voice = selectedVoice;
+            console.log("Using voice:", selectedVoice.name);
+        } else {
+            console.warn("No matching voice found. Using default voice.");
+        }
+
+        speech.rate = 0.9;
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(speech);
+    }
 }
 </script>
 <!-- LOAD SCRIPTS ONLY ONCE -->
