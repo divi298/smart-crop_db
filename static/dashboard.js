@@ -34,7 +34,7 @@ function loadData() {
                 return;
             }
 
-            let latest = data[data.length - 1];
+            let latest = data[0];
 
             document.getElementById("moistureValue").innerText = latest.moisture;
             document.getElementById("temperatureValue").innerText = latest.temperature;
