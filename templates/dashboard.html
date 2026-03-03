@@ -1,11 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Smart Crop IoT</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
 <body>
 
 <header class="main-header">
@@ -18,6 +10,9 @@
     </select>
 </header>
 
+<!-- ========================= -->
+<!-- 🌡 LIVE FIELD STATUS -->
+<!-- ========================= -->
 <section class="section-title">
     <h2 data-key="live_status">📡 Live Field Status</h2>
 </section>
@@ -26,6 +21,9 @@
     <div class="card">
         <h3 data-key="moisture">Moisture</h3>
         <p id="moistureValue">--</p>
+        <div class="progress-container">
+            <div id="moistureBar" class="progress-bar"></div>
+        </div>
     </div>
 
     <div class="card">
@@ -39,28 +37,59 @@
     </div>
 </section>
 
+<!-- ========================= -->
+<!-- 🌾 SOIL ALERT SECTION -->
+<!-- ========================= -->
+<section class="soil-alert">
+    <div id="soilAlertCard" class="soil-card">
+        <h2 id="soilAlertText">🌾 Checking Soil Condition...</h2>
+    </div>
+</section>
+
+<!-- ========================= -->
+<!-- 🌾 CROP RECOMMENDATION -->
+<!-- ========================= -->
 <section class="section-title">
     <h2 data-key="crop_rec">🌾 Crop Recommendation</h2>
 </section>
 
 <section class="recommendation">
-    <p><strong data-key="soil">Soil Condition:</strong>
-        <span id="soil">--</span>
-    </p>
+    <div class="recommendation-card">
+        <p><strong data-key="soil">Soil Condition:</strong>
+            <span id="soil">--</span>
+        </p>
 
-    <p><strong data-key="crop">Recommended Crop:</strong>
-        <span id="crop">--</span>
-    </p>
+        <p><strong data-key="crop">Recommended Crop:</strong>
+            <span id="crop" class="highlight-text">--</span>
+        </p>
 
-    <p><strong data-key="fertilizer">Fertilizer:</strong>
-        <span id="fertilizer">--</span>
-    </p>
+        <p><strong data-key="fertilizer">Fertilizer:</strong>
+            <span id="fertilizer">--</span>
+        </p>
 
-    <div style="margin-top:20px;">
-        <button onclick="speakRecommendation()">🔊 Hear Recommendation</button>
+        <div style="margin-top:20px;">
+            <button onclick="speakRecommendation()">🔊 Hear Recommendation</button>
+        </div>
+    </div>
+</section>
+<section class="action-section">
+    <div id="farmerAction" class="action-card">
+        🌾 Waiting for soil analysis...
     </div>
 </section>
 
+<!-- ========================= -->
+<!-- 🌾 FARMER ACTION SUGGESTION -->
+<!-- ========================= -->
+<section class="action-section">
+    <div id="farmerAction" class="action-card">
+        🌾 Waiting for soil analysis...
+    </div>
+</section>
+
+<!-- ========================= -->
+<!-- 📈 YIELD PREDICTION -->
+<!-- ========================= -->
 <section class="section-title">
     <h2 data-key="yield">📈 Yield Prediction</h2>
 </section>
@@ -78,6 +107,9 @@
     </div>
 </section>
 
+<!-- ========================= -->
+<!-- 📊 SENSOR TREND CHART -->
+<!-- ========================= -->
 <section class="section-title">
     <h2>📊 Moisture Trend</h2>
 </section>
@@ -85,39 +117,3 @@
 <section class="chart-section">
     <canvas id="sensorChart"></canvas>
 </section>
-<script>
-function speakRecommendation() {
-
-    const crop = document.getElementById("crop").innerText.trim();
-    const fertilizer = document.getElementById("fertilizer").innerText.trim();
-    const soil = document.getElementById("soil").innerText.trim();
-    const language = document.getElementById("languageSwitcher").value;
-
-    if (!crop || crop === "--") return;
-
-    fetch("/speak", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            crop: crop,
-            fertilizer: fertilizer,
-            soil: soil,
-            language: language
-        })
-    })
-    .then(response => response.blob())
-    .then(blob => {
-        const audioURL = URL.createObjectURL(blob);
-        const audio = new Audio(audioURL);
-        audio.play();
-    });
-}
-</script>
-<!-- LOAD SCRIPTS ONLY ONCE -->
-<script src="{{ url_for('static', filename='translations.js') }}"></script>
-<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
-
-</body>
-</html>

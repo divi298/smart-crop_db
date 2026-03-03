@@ -62,12 +62,43 @@ select {
     font-weight: bold;
     color: #2e7d32;
 }
+.soil-card {
+    margin: 20px;
+    padding: 25px;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    transition: 0.4s ease;
+}
 
+.soil-wet {
+    background: #bbdefb;
+    color: #0d47a1;
+}
+
+.soil-moderate {
+    background: #c8e6c9;
+    color: #1b5e20;
+}
+
+.soil-dry {
+    background: #ffcdd2;
+    color: #b71c1c;
+}
 /* Recommendation Card */
 .recommendation {
     padding: 20px;
 }
 
+.action-card {
+    margin: 20px;
+    padding: 20px;
+    background: #f3e5d8;
+    border-radius: 15px;
+    font-size: 20px;
+    text-align: center;
+}
 .recommendation-card {
     background: #e8f5e9;
     padding: 30px;

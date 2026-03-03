@@ -60,13 +60,45 @@ function loadData() {
             document.getElementById("crop").innerText = crop;
             document.getElementById("fertilizer").innerText = fertilizer;
 
+            // ======================================
+            // 🌈 INTERACTIVE FARMER ALERT SYSTEM
+            // ======================================
+
+            const moisture = latest.moisture;
+            const bar = document.getElementById("moistureBar");
+            const alertCard = document.getElementById("soilAlertCard");
+            const alertText = document.getElementById("soilAlertText");
+            const actionCard = document.getElementById("farmerAction");
+
+            // 🌡 Moisture Progress Bar
+            const percent = Math.min((moisture / 1023) * 100, 100);
+            if (bar) {
+                bar.style.width = percent + "%";
+            }
+
+            // 🌾 Soil Condition Visual Alerts
+            if (moisture < 400) {
+                alertCard.className = "soil-card soil-wet";
+                alertText.innerText = "💧 Soil is Wet – Do NOT water now";
+                actionCard.innerText = "⛔ Do not water. Soil already wet.";
+            }
+            else if (moisture < 700) {
+                alertCard.className = "soil-card soil-moderate";
+                alertText.innerText = "🌿 Soil is Perfect – Good condition";
+                actionCard.innerText = "✅ Soil moisture is balanced.";
+            }
+            else {
+                alertCard.className = "soil-card soil-dry";
+                alertText.innerText = "⚠ Soil is Dry – Water Immediately";
+                actionCard.innerText = "🚿 Please water your field today.";
+            }
+
             updateChart(data);
         })
         .catch(error => {
             console.error("Error fetching data:", error);
         });
 }
-
 
 // =====================================
 // 📈 Update Chart
