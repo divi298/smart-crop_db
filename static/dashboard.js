@@ -71,7 +71,6 @@ element.innerText=translations[lang][key];
 
 }
 
-
 window.addEventListener("DOMContentLoaded",()=>{
 
 const savedLang=localStorage.getItem("language") || "en";
@@ -84,7 +83,7 @@ changeLanguage();
 
 
 /* =====================================
-🌦 LOAD WEATHER
+🌦 WEATHER
 ===================================== */
 
 function loadWeather(){
@@ -93,24 +92,20 @@ fetch("/weather")
 .then(res=>res.json())
 .then(data=>{
 
-currentWeather = data.weather;
+currentWeather=data.weather;
 
-if(document.getElementById("weatherCondition")){
 document.getElementById("weatherCondition").innerText=data.weather;
-}
-
-if(document.getElementById("weatherTemp")){
 document.getElementById("weatherTemp").innerText=data.temperature+" °C";
-}
 
 })
-.catch(err=>console.error("Weather error:",err));
+
+.catch(err=>console.log("Weather error:",err));
 
 }
 
 
 /* =====================================
-🚿 SMART IRRIGATION ADVICE
+🚿 IRRIGATION ADVICE
 ===================================== */
 
 function irrigationAdvice(moisture){
@@ -118,16 +113,16 @@ function irrigationAdvice(moisture){
 let message="";
 
 if(moisture < 400){
-message="🚿 Soil is very wet — Avoid irrigation";
+message="🚿 Soil very wet — Avoid irrigation";
 }
 else if(moisture > 700){
-message="💧 Soil is dry — Irrigation recommended";
+message="💧 Soil dry — Irrigation recommended";
 }
 else if(currentWeather==="Rain"){
 message="🌧 Rain expected — Do not irrigate";
 }
 else{
-message="🌱 Soil moisture is healthy";
+message="🌱 Soil moisture healthy";
 }
 
 document.getElementById("farmerAction").innerText=message;
@@ -136,7 +131,7 @@ document.getElementById("farmerAction").innerText=message;
 
 
 /* =====================================
-📡 LOAD SENSOR DATA
+📡 SENSOR DATA
 ===================================== */
 
 function loadData(){
@@ -162,9 +157,7 @@ document.getElementById("fertilizer").innerText=latest.recommended_fertilizer;
 
 let moisturePercent=Math.min(100,(latest.moisture/1023)*100);
 
-if(document.getElementById("moistureBar")){
 document.getElementById("moistureBar").style.width=moisturePercent+"%";
-}
 
 
 /* irrigation advice */
@@ -184,7 +177,7 @@ updateChart(data);
 
 
 /* =====================================
-📊 UPDATE CHART
+📊 CHART
 ===================================== */
 
 function updateChart(data){
@@ -214,6 +207,74 @@ responsive:true,
 maintainAspectRatio:false
 }
 });
+
+}
+
+
+/* =====================================
+📈 YIELD PREDICTION
+===================================== */
+
+async function predictYield(){
+
+let land=document.getElementById("landInput").value;
+let crop=document.getElementById("crop").innerText;
+
+if(!land){
+alert("Enter land size");
+return;
+}
+
+const res=await fetch("/predict_yield",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+crop:crop,
+land:land
+})
+});
+
+const data=await res.json();
+
+document.getElementById("yieldResult").innerText=
+"Estimated Yield: "+data.predicted_yield+" "+data.unit;
+
+}
+
+
+/* =====================================
+🔊 VOICE RECOMMENDATION
+===================================== */
+
+async function speakRecommendation(){
+
+const crop=document.getElementById("crop").innerText;
+const fertilizer=document.getElementById("fertilizer").innerText;
+const soil=document.getElementById("soil").innerText;
+const lang=document.getElementById("languageSelector").value;
+
+const res=await fetch("/speak",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+crop:crop,
+fertilizer:fertilizer,
+soil:soil,
+language:lang
+})
+});
+
+const blob=await res.blob();
+
+const url=URL.createObjectURL(blob);
+
+const audio=new Audio(url);
+
+audio.play();
 
 }
 

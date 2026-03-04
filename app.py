@@ -1,20 +1,22 @@
 import os
 import sqlite3
 import requests
-from flask import Flask, request, jsonify, render_template
+import io
+
+from flask import Flask, request, jsonify, render_template, send_file
+from gtts import gTTS
 from datetime import datetime
 
 app = Flask(__name__)
 
 DB = "agri.db"
 
-# OpenWeather API Key
 API_KEY = "b049a273f64043aae3ee5f2085544ad3"
 CITY = "Hyderabad"
 
-# =========================
+# -----------------------------
 # Initialize DB
-# =========================
+# -----------------------------
 def init_db():
 
     conn = sqlite3.connect(DB)
@@ -26,7 +28,6 @@ def init_db():
         moisture REAL,
         temperature REAL,
         humidity REAL,
-        rainfall REAL,
         soil_condition TEXT,
         crop TEXT,
         fertilizer TEXT,
@@ -39,28 +40,25 @@ def init_db():
 
 init_db()
 
-# =========================
+# -----------------------------
 # Dashboard
-# =========================
+# -----------------------------
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
 
-# =========================
+# -----------------------------
 # Receive Sensor Data
-# =========================
+# -----------------------------
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
 
     data = request.get_json()
 
-    moisture = data.get("moisture",0)
-    temperature = data.get("temperature",0)
-    humidity = data.get("humidity",0)
+    moisture = data.get("moisture")
+    temperature = data.get("temperature")
+    humidity = data.get("humidity")
 
-    rainfall = 0
-
-    # Soil condition logic
     if moisture < 400:
         soil = "Wet"
     elif moisture < 700:
@@ -76,13 +74,12 @@ def receive_sensor():
 
     c.execute("""
     INSERT INTO sensor_data
-    (moisture,temperature,humidity,rainfall,soil_condition,crop,fertilizer,timestamp)
-    VALUES(?,?,?,?,?,?,?,?)
+    (moisture,temperature,humidity,soil_condition,crop,fertilizer,timestamp)
+    VALUES(?,?,?,?,?,?,?)
     """,(
         moisture,
         temperature,
         humidity,
-        rainfall,
         soil,
         crop,
         fertilizer,
@@ -99,9 +96,9 @@ def receive_sensor():
         "recommended_fertilizer":fertilizer
     })
 
-# =========================
+# -----------------------------
 # History API
-# =========================
+# -----------------------------
 @app.route("/history")
 def history():
 
@@ -109,11 +106,11 @@ def history():
     c = conn.cursor()
 
     c.execute("""
-    SELECT moisture,temperature,humidity,rainfall,
+    SELECT moisture,temperature,humidity,
            soil_condition,crop,fertilizer,timestamp
     FROM sensor_data
     ORDER BY id DESC
-    LIMIT 50
+    LIMIT 20
     """)
 
     rows = c.fetchall()
@@ -127,49 +124,85 @@ def history():
             "moisture":r[0],
             "temperature":r[1],
             "humidity":r[2],
-            "rainfall":r[3],
-            "soil_condition":r[4],
-            "recommended_crop":r[5],
-            "recommended_fertilizer":r[6],
-            "timestamp":r[7]
+            "soil_condition":r[3],
+            "recommended_crop":r[4],
+            "recommended_fertilizer":r[5],
+            "timestamp":r[6]
         })
 
     return jsonify(data)
 
-# =========================
+# -----------------------------
 # Weather API
-# =========================
+# -----------------------------
 @app.route("/weather")
 def weather():
 
-    try:
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric"
 
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric"
+    res = requests.get(url).json()
 
-        response = requests.get(url)
-        data = response.json()
+    return jsonify({
+        "temperature":res["main"]["temp"],
+        "humidity":res["main"]["humidity"],
+        "weather":res["weather"][0]["main"]
+    })
 
-        weather_data = {
-            "city": data["name"],
-            "temperature": data["main"]["temp"],
-            "humidity": data["main"]["humidity"],
-            "weather": data["weather"][0]["main"],
-            "description": data["weather"][0]["description"]
-        }
+# -----------------------------
+# Yield Prediction
+# -----------------------------
+@app.route("/predict_yield", methods=["POST"])
+def predict_yield():
 
-        return jsonify(weather_data)
+    data = request.get_json()
 
-    except Exception as e:
+    crop = data["crop"]
+    land = float(data["land"])
 
-        return jsonify({
-            "error": str(e)
-        })
+    yield_map = {
+        "rice":3.5,
+        "maize":2.8,
+        "banana":30,
+        "muskmelon":2.5,
+        "cotton":2
+    }
 
-# =========================
+    yield_per_acre = yield_map.get(crop,2)
+
+    predicted = yield_per_acre * land
+
+    return jsonify({
+        "predicted_yield":round(predicted,2),
+        "unit":"tons"
+    })
+
+# -----------------------------
+# Voice Recommendation
+# -----------------------------
+@app.route("/speak", methods=["POST"])
+def speak():
+
+    data = request.get_json()
+
+    crop = data["crop"]
+    fertilizer = data["fertilizer"]
+    soil = data["soil"]
+    language = data["language"]
+
+    text = f"Recommended crop is {crop}. Soil condition is {soil}. Use fertilizer {fertilizer}"
+
+    tts = gTTS(text=text, lang=language)
+
+    audio = io.BytesIO()
+    tts.write_to_fp(audio)
+    audio.seek(0)
+
+    return send_file(audio, mimetype="audio/mpeg")
+
+# -----------------------------
 # Run Server
-# =========================
+# -----------------------------
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT",10000))
-
     app.run(host="0.0.0.0",port=port)

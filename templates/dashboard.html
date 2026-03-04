@@ -56,11 +56,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <div class="cards">
 
 <div class="card">
-
 <i class="fas fa-water"></i>
-
 <h3 data-key="moisture">Soil Moisture</h3>
-
 <p id="moistureValue">--</p>
 
 <div class="progress-container">
@@ -69,29 +66,24 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 </div>
 
-
 <div class="card">
-
 <i class="fas fa-temperature-high"></i>
-
 <h3 data-key="temperature">Temperature</h3>
-
 <p id="temperatureValue">--</p>
-
 </div>
-
 
 <div class="card">
-
 <i class="fas fa-cloud-rain"></i>
-
 <h3 data-key="humidity">Humidity</h3>
-
 <p id="humidityValue">--</p>
-
 </div>
 
 </div>
+
+
+<!-- ========================= -->
+<!-- 🌦 WEATHER -->
+<!-- ========================= -->
 
 <div class="section-title">
 <h2>🌦 Weather Forecast</h2>
@@ -113,6 +105,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 </div>
 
+
 <!-- ========================= -->
 <!-- 🌾 SOIL ALERT -->
 <!-- ========================= -->
@@ -120,13 +113,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <div class="soil-alert">
 
 <div class="soil-card">
-
 <h2 id="soilAlertText">🌱 Checking Soil Condition...</h2>
-
 </div>
 
 </div>
-
 
 
 <!-- ========================= -->
@@ -156,10 +146,45 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <span id="fertilizer">--</span>
 </p>
 
+<!-- 🔊 Voice Guidance -->
+<div style="margin-top:20px;">
+<button onclick="speakRecommendation()">
+<i class="fas fa-volume-up"></i>
+Hear Advice
+</button>
 </div>
 
 </div>
 
+</div>
+
+
+<!-- ========================= -->
+<!-- 📈 YIELD PREDICTION -->
+<!-- ========================= -->
+
+<div class="section-title">
+<h2>📈 Yield Prediction</h2>
+</div>
+
+<div class="yield-section">
+
+<label>Enter Land Area (Acres)</label>
+
+<div class="yield-input">
+<input type="number" id="landInput" placeholder="e.g. 2" min="0" step="0.1">
+
+<button onclick="predictYield()">
+<i class="fas fa-chart-line"></i>
+Predict
+</button>
+</div>
+
+<div class="yield-result">
+<h3 id="yieldResult"></h3>
+</div>
+
+</div>
 
 
 <!-- ========================= -->
@@ -169,13 +194,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <div class="action-section">
 
 <div id="farmerAction" class="action-card">
-
 🌾 Waiting for soil analysis...
-
 </div>
 
 </div>
-
 
 
 <!-- ========================= -->
@@ -187,11 +209,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 </div>
 
 <div class="chart-section">
-
 <canvas id="sensorChart"></canvas>
-
 </div>
-
 
 
 <!-- ========================= -->
