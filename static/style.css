@@ -238,6 +238,45 @@ color:#2e7d32;
 font-weight:bold;
 }
 
+/* =========================
+NAVBAR
+========================= */
+
+.navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#2e7d32;
+padding:15px 25px;
+border-radius:10px;
+color:white;
+margin-bottom:20px;
+}
+
+.nav-left h2{
+margin:0;
+color:white;
+font-size:24px;
+}
+
+.nav-right{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.nav-right i{
+font-size:18px;
+color:white;
+}
+
+.nav-right select{
+padding:6px 10px;
+border-radius:6px;
+border:none;
+font-size:14px;
+cursor:pointer;
+}
 
 /* =========================
 CHART
@@ -260,6 +299,20 @@ box-shadow:0 6px 15px rgba(0,0,0,0.1);
 /* =========================
 MOBILE FRIENDLY
 ========================= */
+
+@media(max-width:768px){
+
+.navbar{
+flex-direction:column;
+gap:10px;
+text-align:center;
+}
+
+.nav-right{
+justify-content:center;
+}
+
+}
 
 @media(max-width:768px){
 
