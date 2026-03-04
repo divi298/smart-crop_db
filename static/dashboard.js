@@ -33,34 +33,35 @@ function loadData() {
 
             if (!data || data.length === 0) return;
 
-            // ✅ get latest record
-            let latest = data[0]; // backend already sorts DESC
+            const latest = data[0];
 
             // =========================
             // Update Sensor Values
             // =========================
-            document.getElementById("moistureValue").innerText =
-                latest.moisture ?? "--";
+            const moisture = document.getElementById("moistureValue");
+            const temperature = document.getElementById("temperatureValue");
+            const humidity = document.getElementById("humidityValue");
 
-            document.getElementById("temperatureValue").innerText =
-                latest.temperature ?? "--";
-
-            document.getElementById("humidityValue").innerText =
-                latest.humidity ?? "--";
+            if (moisture) moisture.innerText = latest.moisture ?? "--";
+            if (temperature) temperature.innerText = latest.temperature ?? "--";
+            if (humidity) humidity.innerText = latest.humidity ?? "--";
 
             // =========================
             // Update Recommendation
             // =========================
-            document.getElementById("soil").innerText =
-                latest.soil_condition ?? "--";
+            const soil = document.getElementById("soil");
+            const crop = document.getElementById("crop");
+            const fertilizer = document.getElementById("fertilizer");
 
-            document.getElementById("crop").innerText =
-                latest.recommended_crop ?? "--";
+            if (soil) soil.innerText = latest.soil_condition ?? "--";
+            if (crop) crop.innerText = latest.recommended_crop ?? "--";
+            if (fertilizer) fertilizer.innerText = latest.recommended_fertilizer ?? "--";
 
-            document.getElementById("fertilizer").innerText =
-                latest.recommended_fertilizer ?? "--";
-
+            // =========================
+            // Update Chart
+            // =========================
             updateChart(data);
+
         })
         .catch(error => {
             console.error("Error fetching data:", error);
@@ -73,13 +74,16 @@ function loadData() {
 // =====================================
 function updateChart(data) {
 
-    let labels = data.map(d => d.timestamp);
-    let moisture = data.map(d => d.moisture);
+    const canvas = document.getElementById("sensorChart");
+    if (!canvas) return;
+
+    const labels = data.map(d => d.timestamp);
+    const moisture = data.map(d => d.moisture);
 
     if (chart) chart.destroy();
 
-    chart = new Chart(document.getElementById("sensorChart"), {
-        type: 'line',
+    chart = new Chart(canvas, {
+        type: "line",
         data: {
             labels: labels,
             datasets: [{
@@ -104,12 +108,11 @@ function updateChart(data) {
 // =====================================
 function predictYield() {
 
-    let land = document.getElementById("landInput").value;
+    const land = document.getElementById("landInput").value;
 
     let displayedCrop = document.getElementById("crop").innerText;
     let originalCrop = displayedCrop;
 
-    // reverse translation
     for (let key in dynamicTranslations.crop) {
         let obj = dynamicTranslations.crop[key];
         if (obj.te === displayedCrop || obj.hi === displayedCrop) {
@@ -155,7 +158,11 @@ function predictYield() {
 
 
 // =====================================
-// 🔁 Auto Refresh Every 5 Seconds
+// 🚀 Run After Page Loads
 // =====================================
-setInterval(loadData, 5000);
-loadData();
+document.addEventListener("DOMContentLoaded", function(){
+
+    loadData();
+    setInterval(loadData, 5000);
+
+});
