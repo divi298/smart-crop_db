@@ -6,7 +6,7 @@ let chart;
 const dynamicTranslations = {
     crop: {
         rice: { te: "వరి", hi: "धान" },
-        maize: { te: "మొక్కజొన్న", hi: "मक्का" },
+        maize: { te: "మొక్కజొన్న", hi: "मक्का" }, 
         millet: { te: "సజ్జ", hi: "बाजरा" },
         groundnut: { te: "పల్లీలు", hi: "मूंगफली" },
         muskmelon: { te: "కర్బూజ", hi: "खरबूजा" },
@@ -35,8 +35,8 @@ function loadData() {
                 return;
             }
 
-            // NEWEST RECORD
-            let latest = data[0];
+            // ✅ LATEST RECORD (FIXED)
+            let latest = data[data.length - 1];
 
             document.getElementById("moistureValue").innerText = latest.moisture;
             document.getElementById("temperatureValue").innerText = latest.temperature;
@@ -52,6 +52,7 @@ function loadData() {
             console.error("Error fetching data:", error);
         });
 }
+
 // =====================================
 // 📈 Update Chart
 // =====================================
@@ -82,7 +83,6 @@ function updateChart(data) {
     });
 }
 
-
 // =====================================
 // 🌾 Yield Prediction
 // =====================================
@@ -90,14 +90,9 @@ function predictYield() {
 
     let land = document.getElementById("landInput").value;
 
-    // IMPORTANT:
-    // Send original English crop to backend
-    // So ML logic works properly
-
     let displayedCrop = document.getElementById("crop").innerText;
     let originalCrop = displayedCrop;
 
-    // Reverse translation (if Telugu or Hindi)
     for (let key in dynamicTranslations.crop) {
         let obj = dynamicTranslations.crop[key];
         if (obj.te === displayedCrop || obj.hi === displayedCrop) {
@@ -140,7 +135,6 @@ function predictYield() {
         console.error("Yield prediction error:", error);
     });
 }
-
 
 // =====================================
 // 🔁 Auto Refresh Every 5 Sec
