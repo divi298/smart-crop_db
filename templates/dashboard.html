@@ -1,116 +1,205 @@
-<body>
-<head>
-    <title>Smart Crop IoT</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+let chart = null;
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<!-- ========================= -->
-<!-- 🌡 LIVE FIELD STATUS -->
-<!-- ========================= -->
-<section class="section-title">
-    <h2 data-key="live_status">📡 Live Field Status</h2>
-</section>
+// ============================
+// 📡 Load Sensor Data
+// ============================
+async function loadDashboard(){
 
-<section class="cards">
-    <div class="card">
-        <h3 data-key="moisture">Moisture</h3>
-        <p id="moistureValue">--</p>
-        <div class="progress-container">
-            <div id="moistureBar" class="progress-bar"></div>
-        </div>
-    </div>
+    try{
 
-    <div class="card">
-        <h3 data-key="temperature">Temperature</h3>
-        <p id="temperatureValue">--</p>
-    </div>
+        const response = await fetch("/history");
+        const data = await response.json();
 
-    <div class="card">
-        <h3 data-key="humidity">Humidity</h3>
-        <p id="humidityValue">--</p>
-    </div>
-</section>
+        if(!data || data.length === 0){
+            console.log("No sensor data yet");
+            return;
+        }
 
-<!-- ========================= -->
-<!-- 🌾 SOIL ALERT SECTION -->
-<!-- ========================= -->
-<section class="soil-alert">
-    <div id="soilAlertCard" class="soil-card">
-        <h2 id="soilAlertText">🌾 Checking Soil Condition...</h2>
-    </div>
-</section>
+        const latest = data[0];
 
-<!-- ========================= -->
-<!-- 🌾 CROP RECOMMENDATION -->
-<!-- ========================= -->
-<section class="section-title">
-    <h2 data-key="crop_rec">🌾 Crop Recommendation</h2>
-</section>
+        // ----------------------
+        // Update Live Cards
+        // ----------------------
+        const moisture = Number(latest.moisture);
+        const temperature = Number(latest.temperature);
+        const humidity = Number(latest.humidity);
 
-<section class="recommendation">
-    <div class="recommendation-card">
-        <p><strong data-key="soil">Soil Condition:</strong>
-            <span id="soil">--</span>
-        </p>
+        document.getElementById("moistureValue").innerText = moisture;
+        document.getElementById("temperatureValue").innerText = temperature + " °C";
+        document.getElementById("humidityValue").innerText = humidity + " %";
 
-        <p><strong data-key="crop">Recommended Crop:</strong>
-            <span id="crop" class="highlight-text">--</span>
-        </p>
+        document.getElementById("soil").innerText = latest.soil_condition;
+        document.getElementById("crop").innerText = latest.recommended_crop;
+        document.getElementById("fertilizer").innerText = latest.recommended_fertilizer;
 
-        <p><strong data-key="fertilizer">Fertilizer:</strong>
-            <span id="fertilizer">--</span>
-        </p>
+        // ----------------------
+        // Moisture Progress Bar
+        // ----------------------
+        const moisturePercent = Math.min(100, (moisture / 1023) * 100);
+        document.getElementById("moistureBar").style.width = moisturePercent + "%";
 
-        <div style="margin-top:20px;">
-            <button onclick="speakRecommendation()">🔊 Hear Recommendation</button>
-        </div>
-    </div>
-</section>
-<section class="action-section">
-    <div id="farmerAction" class="action-card">
-        🌾 Waiting for soil analysis...
-    </div>
-</section>
+        // ----------------------
+        // Soil Alert
+        // ----------------------
+        let alertText = "";
 
-<!-- ========================= -->
-<!-- 🌾 FARMER ACTION SUGGESTION -->
-<!-- ========================= -->
-<section class="action-section">
-    <div id="farmerAction" class="action-card">
-        🌾 Waiting for soil analysis...
-    </div>
-</section>
+        if(latest.soil_condition === "Dry"){
+            alertText = "⚠ Soil is Dry — Irrigation Needed";
+        }
+        else if(latest.soil_condition === "Moderate"){
+            alertText = "🌾 Soil Moisture is Optimal";
+        }
+        else{
+            alertText = "💧 Soil is Wet";
+        }
 
-<!-- ========================= -->
-<!-- 📈 YIELD PREDICTION -->
-<!-- ========================= -->
-<section class="section-title">
-    <h2 data-key="yield">📈 Yield Prediction</h2>
-</section>
+        document.getElementById("soilAlertText").innerText = alertText;
 
-<section class="yield-section">
-    <label data-key="land">Enter Land (in acres):</label>
+        // ----------------------
+        // Farmer Action
+        // ----------------------
+        let action = "";
 
-    <div class="yield-input">
-        <input type="number" id="landInput" placeholder="e.g. 2" min="0" step="0.1">
-        <button onclick="predictYield()" data-key="predict">Predict</button>
-    </div>
+        if(latest.soil_condition === "Dry"){
+            action = "🚿 Start irrigation to improve soil moisture.";
+        }
+        else if(latest.soil_condition === "Moderate"){
+            action = "✅ Soil condition is healthy.";
+        }
+        else{
+            action = "⚠ Soil too wet. Avoid irrigation.";
+        }
 
-    <div class="yield-result">
-        <h3 id="yieldResult"></h3>
-    </div>
-</section>
+        const farmerAction = document.getElementById("farmerAction");
+        if(farmerAction){
+            farmerAction.innerText = action;
+        }
 
-<!-- ========================= -->
-<!-- 📊 SENSOR TREND CHART -->
-<!-- ========================= -->
-<section class="section-title">
-    <h2>📊 Moisture Trend</h2>
-</section>
+        // ----------------------
+        // Chart Data
+        // ----------------------
+        updateChart(data);
 
-<section class="chart-section">
-    <canvas id="sensorChart"></canvas>
-</section>
+    }
+    catch(error){
+        console.error("Dashboard Error:", error);
+    }
+
+}
+
+// ============================
+// 📊 Chart Setup
+// ============================
+function updateChart(data){
+
+    const canvas = document.getElementById("sensorChart");
+
+    if(!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    const labels = [];
+    const moistureValues = [];
+
+    data.slice().reverse().forEach(row=>{
+        labels.push(row.timestamp);
+        moistureValues.push(Number(row.moisture));
+    });
+
+    if(chart){
+        chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Soil Moisture",
+                data: moistureValues,
+                borderWidth: 3,
+                tension: 0.3
+            }]
+        },
+        options:{
+            responsive:true,
+            scales:{
+                y:{
+                    beginAtZero:true
+                }
+            }
+        }
+    });
+
+}
+
+// ============================
+// 📈 Yield Prediction
+// ============================
+async function predictYield(){
+
+    const land = document.getElementById("landInput").value;
+    const crop = document.getElementById("crop").innerText;
+
+    if(!land){
+        alert("Enter land size");
+        return;
+    }
+
+    const response = await fetch("/predict_yield",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body: JSON.stringify({
+            land: land,
+            crop: crop
+        })
+    });
+
+    const result = await response.json();
+
+    document.getElementById("yieldResult").innerText =
+        "Estimated Yield: " + result.predicted_yield + " " + result.unit;
+
+}
+
+// ============================
+// 🔊 Voice Recommendation
+// ============================
+async function speakRecommendation(){
+
+    const crop = document.getElementById("crop").innerText;
+    const fertilizer = document.getElementById("fertilizer").innerText;
+    const soil = document.getElementById("soil").innerText;
+
+    const response = await fetch("/speak",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body: JSON.stringify({
+            crop: crop,
+            fertilizer: fertilizer,
+            soil: soil,
+            language: "en"
+        })
+    });
+
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    const audio = new Audio(audioUrl);
+    audio.play();
+
+}
+
+// ============================
+// ⏱ Auto Refresh
+// ============================
+loadDashboard();
+setInterval(loadDashboard,5000);
+
+</script>
