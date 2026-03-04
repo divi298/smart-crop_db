@@ -6,7 +6,7 @@ let chart;
 const dynamicTranslations = {
     crop: {
         rice: { te: "వరి", hi: "धान" },
-        maize: { te: "మొక్కజొన్న", hi: "मक्का" }, 
+        maize: { te: "మొక్కజొన్న", hi: "मक्का" },
         millet: { te: "సజ్జ", hi: "बाजरा" },
         groundnut: { te: "పల్లీలు", hi: "मूंगफली" },
         muskmelon: { te: "కర్బూజ", hi: "खरबूजा" },
@@ -31,20 +31,34 @@ function loadData() {
 
             console.log("History data:", data);
 
-            if (!data || data.length === 0) {
-                return;
-            }
+            if (!data || data.length === 0) return;
 
-            // ✅ LATEST RECORD (FIXED)
-            let latest = data[data.length - 1];
+            // ✅ get latest record
+            let latest = data[0]; // backend already sorts DESC
 
-            document.getElementById("moistureValue").innerText = latest.moisture;
-            document.getElementById("temperatureValue").innerText = latest.temperature;
-            document.getElementById("humidityValue").innerText = latest.humidity;
+            // =========================
+            // Update Sensor Values
+            // =========================
+            document.getElementById("moistureValue").innerText =
+                latest.moisture ?? "--";
 
-            document.getElementById("soil").innerText = latest.soil_condition;
-            document.getElementById("crop").innerText = latest.recommended_crop;
-            document.getElementById("fertilizer").innerText = latest.recommended_fertilizer;
+            document.getElementById("temperatureValue").innerText =
+                latest.temperature ?? "--";
+
+            document.getElementById("humidityValue").innerText =
+                latest.humidity ?? "--";
+
+            // =========================
+            // Update Recommendation
+            // =========================
+            document.getElementById("soil").innerText =
+                latest.soil_condition ?? "--";
+
+            document.getElementById("crop").innerText =
+                latest.recommended_crop ?? "--";
+
+            document.getElementById("fertilizer").innerText =
+                latest.recommended_fertilizer ?? "--";
 
             updateChart(data);
         })
@@ -52,6 +66,7 @@ function loadData() {
             console.error("Error fetching data:", error);
         });
 }
+
 
 // =====================================
 // 📈 Update Chart
@@ -83,6 +98,7 @@ function updateChart(data) {
     });
 }
 
+
 // =====================================
 // 🌾 Yield Prediction
 // =====================================
@@ -93,6 +109,7 @@ function predictYield() {
     let displayedCrop = document.getElementById("crop").innerText;
     let originalCrop = displayedCrop;
 
+    // reverse translation
     for (let key in dynamicTranslations.crop) {
         let obj = dynamicTranslations.crop[key];
         if (obj.te === displayedCrop || obj.hi === displayedCrop) {
@@ -136,8 +153,9 @@ function predictYield() {
     });
 }
 
+
 // =====================================
-// 🔁 Auto Refresh Every 5 Sec
+// 🔁 Auto Refresh Every 5 Seconds
 // =====================================
 setInterval(loadData, 5000);
 loadData();
