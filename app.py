@@ -59,6 +59,10 @@ def receive_sensor():
     temperature = data.get("temperature")
     humidity = data.get("humidity")
 
+    # ----------------------------
+    # Soil condition
+    # ----------------------------
+
     if moisture < 400:
         soil = "Wet"
     elif moisture < 700:
@@ -66,8 +70,33 @@ def receive_sensor():
     else:
         soil = "Dry"
 
-    crop = "muskmelon"
-    fertilizer = "NPK 10-26-26"
+    # ----------------------------
+    # Dynamic Crop Recommendation
+    # ----------------------------
+
+    if soil == "Wet" and temperature > 25:
+        crop = "Rice"
+        fertilizer = "Urea"
+
+    elif soil == "Moderate" and 20 <= temperature <= 32:
+        crop = "Maize"
+        fertilizer = "NPK 20-20-0"
+
+    elif soil == "Dry" and temperature > 30:
+        crop = "Millet"
+        fertilizer = "DAP"
+
+    elif humidity > 70:
+        crop = "Banana"
+        fertilizer = "Potassium Fertilizer"
+
+    else:
+        crop = "Groundnut"
+        fertilizer = "NPK 10-26-26"
+
+    # ----------------------------
+    # Save data
+    # ----------------------------
 
     conn = sqlite3.connect(DB)
     c = conn.cursor()
@@ -95,7 +124,6 @@ def receive_sensor():
         "recommended_crop":crop,
         "recommended_fertilizer":fertilizer
     })
-
 # -----------------------------
 # History API
 # -----------------------------
@@ -190,14 +218,52 @@ def speak():
     language = data.get("language","en")
 
     # ----------------------------
-    # Language based messages
+    # Crop Translations
+    # ----------------------------
+
+    crop_te = {
+        "Rice":"వరి",
+        "Maize":"మొక్కజొన్న",
+        "Millet":"సజ్జ",
+        "Banana":"అరటి",
+        "Groundnut":"పల్లీలు"
+    }
+
+    crop_hi = {
+        "Rice":"धान",
+        "Maize":"मक्का",
+        "Millet":"बाजरा",
+        "Banana":"केला",
+        "Groundnut":"मूंगफली"
+    }
+
+    soil_te = {
+        "Wet":"తడి",
+        "Moderate":"మధ్యస్థ",
+        "Dry":"ఎండిన"
+    }
+
+    soil_hi = {
+        "Wet":"गीली",
+        "Moderate":"मध्यम",
+        "Dry":"सूखी"
+    }
+
+    # ----------------------------
+    # Language Messages
     # ----------------------------
 
     if language == "te":
 
+        crop = crop_te.get(crop,crop)
+        soil = soil_te.get(soil,soil)
+
         text = f"సిఫార్సు చేసిన పంట {crop}. మట్టి పరిస్థితి {soil}. ఉపయోగించవలసిన ఎరువు {fertilizer}"
 
     elif language == "hi":
+
+        crop = crop_hi.get(crop,crop)
+        soil = soil_hi.get(soil,soil)
 
         text = f"अनुशंसित फसल {crop} है। मिट्टी की स्थिति {soil} है। उपयोग करने वाला उर्वरक {fertilizer}"
 
@@ -216,7 +282,6 @@ def speak():
     audio.seek(0)
 
     return send_file(audio, mimetype="audio/mpeg")
-
 # -----------------------------
 # Run Server
 # -----------------------------
