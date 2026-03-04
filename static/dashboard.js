@@ -1,8 +1,9 @@
 let chart;
+let currentWeather = "Clear";
 
-// =====================================
-// 🌍 MULTILINGUAL TRANSLATIONS
-// =====================================
+/* =====================================
+🌍 MULTILINGUAL TRANSLATIONS
+===================================== */
 
 const translations = {
 
@@ -47,9 +48,10 @@ moisture_chart:"नमी ग्राफ"
 
 };
 
-// =====================================
-// 🌐 LANGUAGE SWITCH
-// =====================================
+
+/* =====================================
+🌐 LANGUAGE SWITCH
+===================================== */
 
 function changeLanguage(){
 
@@ -61,13 +63,15 @@ document.querySelectorAll("[data-key]").forEach(element=>{
 
 const key=element.getAttribute("data-key");
 
+if(translations[lang][key]){
 element.innerText=translations[lang][key];
+}
 
 });
 
 }
 
-// Load saved language
+
 window.addEventListener("DOMContentLoaded",()=>{
 
 const savedLang=localStorage.getItem("language") || "en";
@@ -79,9 +83,61 @@ changeLanguage();
 });
 
 
-// =====================================
-// 📡 LOAD SENSOR DATA
-// =====================================
+/* =====================================
+🌦 LOAD WEATHER
+===================================== */
+
+function loadWeather(){
+
+fetch("/weather")
+.then(res=>res.json())
+.then(data=>{
+
+currentWeather = data.weather;
+
+if(document.getElementById("weatherCondition")){
+document.getElementById("weatherCondition").innerText=data.weather;
+}
+
+if(document.getElementById("weatherTemp")){
+document.getElementById("weatherTemp").innerText=data.temperature+" °C";
+}
+
+})
+.catch(err=>console.error("Weather error:",err));
+
+}
+
+
+/* =====================================
+🚿 SMART IRRIGATION ADVICE
+===================================== */
+
+function irrigationAdvice(moisture){
+
+let message="";
+
+if(moisture < 400){
+message="🚿 Soil is very wet — Avoid irrigation";
+}
+else if(moisture > 700){
+message="💧 Soil is dry — Irrigation recommended";
+}
+else if(currentWeather==="Rain"){
+message="🌧 Rain expected — Do not irrigate";
+}
+else{
+message="🌱 Soil moisture is healthy";
+}
+
+document.getElementById("farmerAction").innerText=message;
+
+}
+
+
+/* =====================================
+📡 LOAD SENSOR DATA
+===================================== */
 
 function loadData(){
 
@@ -101,22 +157,39 @@ document.getElementById("soil").innerText=latest.soil_condition;
 document.getElementById("crop").innerText=latest.recommended_crop;
 document.getElementById("fertilizer").innerText=latest.recommended_fertilizer;
 
+
+/* progress bar */
+
+let moisturePercent=Math.min(100,(latest.moisture/1023)*100);
+
+if(document.getElementById("moistureBar")){
+document.getElementById("moistureBar").style.width=moisturePercent+"%";
+}
+
+
+/* irrigation advice */
+
+irrigationAdvice(latest.moisture);
+
+
+/* update chart */
+
 updateChart(data);
 
 })
 
-.catch(err=>console.error("Error loading sensor data:",err));
+.catch(err=>console.error("Sensor data error:",err));
 
 }
 
 
-// =====================================
-// 📊 UPDATE CHART
-// =====================================
+/* =====================================
+📊 UPDATE CHART
+===================================== */
 
 function updateChart(data){
 
-const ctx=document.getElementById("sensorChart");
+const ctx=document.getElementById("sensorChart").getContext("2d");
 
 let labels=data.map(d=>d.timestamp);
 let moisture=data.map(d=>d.moisture);
@@ -140,15 +213,17 @@ options:{
 responsive:true,
 maintainAspectRatio:false
 }
-})
+});
 
 }
 
 
-// =====================================
-// 🔁 AUTO REFRESH
-// =====================================
+/* =====================================
+🔁 AUTO REFRESH
+===================================== */
 
-setInterval(loadData,5000);
-
+loadWeather();
 loadData();
+
+setInterval(loadWeather,60000);
+setInterval(loadData,5000);
