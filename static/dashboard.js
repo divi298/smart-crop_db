@@ -1,5 +1,88 @@
 let chart;
 
+// =====================================
+// 🌍 MULTILINGUAL TRANSLATIONS
+// =====================================
+
+const translations = {
+
+en:{
+dashboard_title:"🌾 Smart Crop IoT Dashboard",
+live_status:"📡 Live Field Status",
+moisture:"Soil Moisture",
+temperature:"Temperature",
+humidity:"Humidity",
+crop_rec:"Crop Recommendation",
+soil:"Soil Condition:",
+crop:"Recommended Crop:",
+fertilizer:"Fertilizer:",
+moisture_chart:"Moisture Trend"
+},
+
+te:{
+dashboard_title:"🌾 స్మార్ట్ క్రాప్ ఐఓటి డాష్‌బోర్డ్",
+live_status:"📡 ప్రత్యక్ష పొల స్థితి",
+moisture:"మట్టిలో తేమ",
+temperature:"ఉష్ణోగ్రత",
+humidity:"ఆర్ద్రత",
+crop_rec:"పంట సూచన",
+soil:"మట్టి పరిస్థితి:",
+crop:"సిఫార్సు చేసిన పంట:",
+fertilizer:"ఎరువు:",
+moisture_chart:"తేమ మార్పు గ్రాఫ్"
+},
+
+hi:{
+dashboard_title:"🌾 स्मार्ट क्रॉप IoT डैशबोर्ड",
+live_status:"📡 खेत की लाइव स्थिति",
+moisture:"मिट्टी की नमी",
+temperature:"तापमान",
+humidity:"आर्द्रता",
+crop_rec:"फसल सिफारिश",
+soil:"मिट्टी की स्थिति:",
+crop:"अनुशंसित फसल:",
+fertilizer:"उर्वरक:",
+moisture_chart:"नमी ग्राफ"
+}
+
+};
+
+// =====================================
+// 🌐 LANGUAGE SWITCH
+// =====================================
+
+function changeLanguage(){
+
+const lang=document.getElementById("languageSelector").value;
+
+localStorage.setItem("language",lang);
+
+document.querySelectorAll("[data-key]").forEach(element=>{
+
+const key=element.getAttribute("data-key");
+
+element.innerText=translations[lang][key];
+
+});
+
+}
+
+// Load saved language
+window.addEventListener("DOMContentLoaded",()=>{
+
+const savedLang=localStorage.getItem("language") || "en";
+
+document.getElementById("languageSelector").value=savedLang;
+
+changeLanguage();
+
+});
+
+
+// =====================================
+// 📡 LOAD SENSOR DATA
+// =====================================
+
 function loadData(){
 
 fetch("/history")
@@ -22,7 +105,14 @@ updateChart(data);
 
 })
 
+.catch(err=>console.error("Error loading sensor data:",err));
+
 }
+
+
+// =====================================
+// 📊 UPDATE CHART
+// =====================================
 
 function updateChart(data){
 
@@ -39,12 +129,25 @@ data:{
 labels:labels,
 datasets:[{
 label:"Moisture",
-data:moisture
+data:moisture,
+borderColor:"#2e7d32",
+backgroundColor:"rgba(46,125,50,0.2)",
+tension:0.4,
+fill:true
 }]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false
 }
 })
 
 }
+
+
+// =====================================
+// 🔁 AUTO REFRESH
+// =====================================
 
 setInterval(loadData,5000);
 

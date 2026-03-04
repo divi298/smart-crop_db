@@ -25,7 +25,25 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <!-- ========================= -->
 
 <div class="section-title">
-<h2>🌾 Smart Crop IoT Dashboard</h2>
+<h2 data-key="dashboard_title">🌾 Smart Crop IoT Dashboard</h2>
+</div>
+
+<!-- ========================= -->
+<!-- 🌐 LANGUAGE SELECT -->
+<!-- ========================= -->
+
+<div class="language-bar">
+
+<label><i class="fas fa-language"></i></label>
+
+<select id="languageSelector" onchange="changeLanguage()">
+
+<option value="en">English</option>
+<option value="te">తెలుగు</option>
+<option value="hi">हिन्दी</option>
+
+</select>
+
 </div>
 
 
@@ -34,7 +52,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <!-- ========================= -->
 
 <div class="section-title">
-<h2>📡 Live Field Status</h2>
+<h2 data-key="live_status">📡 Live Field Status</h2>
 </div>
 
 <div class="cards">
@@ -43,7 +61,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <i class="fas fa-water"></i>
 
-<h3>Soil Moisture</h3>
+<h3 data-key="moisture">Soil Moisture</h3>
 
 <p id="moistureValue">--</p>
 
@@ -58,7 +76,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <i class="fas fa-temperature-high"></i>
 
-<h3>Temperature</h3>
+<h3 data-key="temperature">Temperature</h3>
 
 <p id="temperatureValue">--</p>
 
@@ -69,7 +87,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <i class="fas fa-cloud-rain"></i>
 
-<h3>Humidity</h3>
+<h3 data-key="humidity">Humidity</h3>
 
 <p id="humidityValue">--</p>
 
@@ -100,7 +118,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <!-- ========================= -->
 
 <div class="section-title">
-<h2><i class="fas fa-seedling"></i> Crop Recommendation</h2>
+<h2 data-key="crop_rec"><i class="fas fa-seedling"></i> Crop Recommendation</h2>
 </div>
 
 <div class="recommendation">
@@ -108,17 +126,17 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <div class="recommendation-card">
 
 <p>
-<strong>Soil Condition:</strong>
+<strong data-key="soil">Soil Condition:</strong>
 <span id="soil">--</span>
 </p>
 
 <p>
-<strong>Recommended Crop:</strong>
+<strong data-key="crop">Recommended Crop:</strong>
 <span id="crop" class="highlight-text">--</span>
 </p>
 
 <p>
-<strong>Fertilizer:</strong>
+<strong data-key="fertilizer">Fertilizer:</strong>
 <span id="fertilizer">--</span>
 </p>
 
@@ -149,7 +167,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <!-- ========================= -->
 
 <div class="section-title">
-<h2>📊 Moisture Trend</h2>
+<h2 data-key="moisture_chart">📊 Moisture Trend</h2>
 </div>
 
 <div class="chart-section">
