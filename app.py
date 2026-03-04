@@ -184,12 +184,30 @@ def speak():
 
     data = request.get_json()
 
-    crop = data["crop"]
-    fertilizer = data["fertilizer"]
-    soil = data["soil"]
-    language = data["language"]
+    crop = data.get("crop")
+    fertilizer = data.get("fertilizer")
+    soil = data.get("soil")
+    language = data.get("language","en")
 
-    text = f"Recommended crop is {crop}. Soil condition is {soil}. Use fertilizer {fertilizer}"
+    # ----------------------------
+    # Language based messages
+    # ----------------------------
+
+    if language == "te":
+
+        text = f"సిఫార్సు చేసిన పంట {crop}. మట్టి పరిస్థితి {soil}. ఉపయోగించవలసిన ఎరువు {fertilizer}"
+
+    elif language == "hi":
+
+        text = f"अनुशंसित फसल {crop} है। मिट्टी की स्थिति {soil} है। उपयोग करने वाला उर्वरक {fertilizer}"
+
+    else:
+
+        text = f"Recommended crop is {crop}. Soil condition is {soil}. Use fertilizer {fertilizer}"
+
+    # ----------------------------
+    # Convert text to speech
+    # ----------------------------
 
     tts = gTTS(text=text, lang=language)
 
