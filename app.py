@@ -1,240 +1,137 @@
 import os
 import sqlite3
-import joblib
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
-from database import init_db
-from flask import send_file
-from gtts import gTTS
-import io
+
 app = Flask(__name__)
 
-# ==============================
-# 💾 Initialize Database
-# ==============================
+DB = "agri.db"
+
+# =========================
+# Initialize DB
+# =========================
+def init_db():
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS sensor_data(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        moisture REAL,
+        temperature REAL,
+        humidity REAL,
+        rainfall REAL,
+        soil_condition TEXT,
+        crop TEXT,
+        fertilizer TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
 init_db()
 
-# ==============================
-# 🤖 Load ML Model
-# ==============================
-try:
-    model = joblib.load("crop_model.pkl")
-    print("✅ Model loaded successfully")
-except Exception as e:
-    print("❌ Model failed to load:", e)
-    model = None
-
-
-# ==============================
-# 🌐 Dashboard Route
-# ==============================
+# =========================
+# Dashboard
+# =========================
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
 
-
-# ==============================
-# 🔥 Sensor Endpoint (ESP sends data here)
-# ==============================
+# =========================
+# Receive Sensor
+# =========================
 @app.route("/receive_sensor", methods=["POST"])
 def receive_sensor():
 
     data = request.get_json()
 
-    if not data:
-        return jsonify({"error": "No data received"}), 400
+    moisture = data.get("moisture",0)
+    temperature = data.get("temperature",0)
+    humidity = data.get("humidity",0)
 
-    moisture = data.get("moisture", 0)
-
-    # Dummy environmental values (can upgrade later)
-    temperature = 30
-    humidity = 60
     rainfall = 0
 
-    # ----------------------------
-    # Soil Condition Logic
-    # ----------------------------
     if moisture < 400:
-        soil_condition = "Wet"
+        soil = "Wet"
     elif moisture < 700:
-        soil_condition = "Moderate"
+        soil = "Moderate"
     else:
-        soil_condition = "Dry"
+        soil = "Dry"
 
-    # ----------------------------
-    # ML Crop Prediction
-    # ----------------------------
-    if model:
-        # Replace with real features later
-        features = [[65, 50, 45, temperature, humidity, 6.5, rainfall]]
-        predicted_crop = model.predict(features)[0]
-    else:
-        predicted_crop = "Maize"
+    crop = "muskmelon"
+    fertilizer = "NPK 10-26-26"
 
-    # ----------------------------
-    # Fertilizer Mapping
-    # ----------------------------
-    fertilizer_map = {
-        "rice": "Urea + DAP",
-        "maize": "NPK 20-20-20",
-        "millet": "Compost + Potash",
-        "groundnut": "Gypsum + Organic Compost",
-        "muskmelon": "NPK 10-26-26",
-        "cotton": "Urea + Potassium",
-        "banana": "NPK 14-14-14"
-    }
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
 
-    fertilizer = fertilizer_map.get(
-        predicted_crop.lower(),
-        "Balanced NPK"
-    )
-
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # ----------------------------
-    # Insert Into Database
-    # ----------------------------
-    conn = sqlite3.connect("agri.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO sensor_data
-        (moisture, temperature, humidity, rainfall,
-         soil_condition, crop, fertilizer, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
+    c.execute("""
+    INSERT INTO sensor_data
+    (moisture,temperature,humidity,rainfall,soil_condition,crop,fertilizer,timestamp)
+    VALUES(?,?,?,?,?,?,?,?)
+    """,(
         moisture,
         temperature,
         humidity,
         rainfall,
-        soil_condition,
-        predicted_crop,
+        soil,
+        crop,
         fertilizer,
-        timestamp
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
 
     conn.commit()
     conn.close()
 
     return jsonify({
-        "status": "success",
-        "soil_condition": soil_condition,
-        "recommended_crop": predicted_crop,
-        "recommended_fertilizer": fertilizer
+        "status":"success",
+        "soil_condition":soil,
+        "recommended_crop":crop,
+        "recommended_fertilizer":fertilizer
     })
 
 
-# ==============================
-# 📊 History API (Dashboard fetches this)
-# ==============================
+# =========================
+# History API
+# =========================
 @app.route("/history")
 def history():
 
-    conn = sqlite3.connect("agri.db")
-    cursor = conn.cursor()
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
 
-    cursor.execute("""
-        SELECT moisture, temperature, humidity, rainfall,
-               soil_condition, crop, fertilizer, timestamp
-        FROM sensor_data
-        ORDER BY id DESC
-        LIMIT 50
+    c.execute("""
+    SELECT moisture,temperature,humidity,rainfall,
+           soil_condition,crop,fertilizer,timestamp
+    FROM sensor_data
+    ORDER BY id DESC
+    LIMIT 50
     """)
 
-    rows = cursor.fetchall()
+    rows = c.fetchall()
     conn.close()
 
-    data = [{
-        "moisture": row[0],
-        "temperature": row[1],
-        "humidity": row[2],
-        "rainfall": row[3],
-        "soil_condition": row[4],
-        "recommended_crop": row[5],
-        "recommended_fertilizer": row[6],
-        "timestamp": row[7]
-    } for row in rows]
+    data = []
+
+    for r in rows:
+        data.append({
+            "moisture":r[0],
+            "temperature":r[1],
+            "humidity":r[2],
+            "rainfall":r[3],
+            "soil_condition":r[4],
+            "recommended_crop":r[5],
+            "recommended_fertilizer":r[6],
+            "timestamp":r[7]
+        })
 
     return jsonify(data)
 
-
-# ==============================
-# 📈 Yield Prediction API
-# ==============================
-@app.route("/predict_yield", methods=["POST"])
-def predict_yield():
-
-    data = request.get_json()
-
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-
-    land = float(data.get("land", 0))
-    crop = data.get("crop", "")
-
-    base_yields = {
-        "rice": 30,
-        "maize": 25,
-        "millet": 18,
-        "groundnut": 20,
-        "muskmelon": 22,
-        "cotton": 28,
-        "banana": 35
-    }
-
-    avg_yield = base_yields.get(crop.lower(), 20)
-
-    predicted_yield = round(land * avg_yield, 2)
-
-
-
-    return jsonify({
-        "predicted_yield": predicted_yield,
-        "unit": "quintals"
-    })
-# ==============================
-# 🔊 Voice Generation API (gTTS)
-# ==============================
-@app.route("/speak", methods=["POST"])
-def speak():
-
-    data = request.get_json()
-
-    crop = data.get("crop")
-    fertilizer = data.get("fertilizer")
-    soil = data.get("soil")
-    language = data.get("language")
-
-    if not crop:
-        return jsonify({"error": "No data"}), 400
-
-    # 🌍 Create message based on selected language
-    if language == "te":
-        message = f"సిఫారసు చేసిన పంట {crop}. నేల పరిస్థితి {soil}. ఎరువు {fertilizer} వాడండి."
-        lang_code = "te"
-    elif language == "hi":
-        message = f"अनुशंसित फसल {crop} है। मिट्टी की स्थिति {soil} है। उर्वरक {fertilizer} का उपयोग करें।"
-        lang_code = "hi"
-    else:
-        message = f"Recommended crop is {crop}. Soil condition is {soil}. Use fertilizer {fertilizer}."
-        lang_code = "en"
-
-    # 🎙 Generate voice using Google TTS
-    tts = gTTS(text=message, lang=lang_code)
-
-    audio_fp = io.BytesIO()
-    tts.write_to_fp(audio_fp)
-    audio_fp.seek(0)
-
-    return send_file(
-        audio_fp,
-        mimetype="audio/mpeg",
-        as_attachment=False
-    )
-
-# ==============================
-# 🚀 Render Production Config
-# ==============================
+# =========================
+# Run
+# =========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT",10000))
+    app.run(host="0.0.0.0",port=port)

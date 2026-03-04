@@ -1,205 +1,47 @@
-<script>
+<!DOCTYPE html>
+<html>
 
-let chart = null;
+<head>
 
-// ============================
-// 📡 Load Sensor Data
-// ============================
-async function loadDashboard(){
+<title>Smart Crop IoT</title>
 
-    try{
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-        const response = await fetch("/history");
-        const data = await response.json();
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        if(!data || data.length === 0){
-            console.log("No sensor data yet");
-            return;
-        }
+</head>
 
-        const latest = data[0];
+<body>
 
-        // ----------------------
-        // Update Live Cards
-        // ----------------------
-        const moisture = Number(latest.moisture);
-        const temperature = Number(latest.temperature);
-        const humidity = Number(latest.humidity);
+<h2>📡 Live Field Status</h2>
 
-        document.getElementById("moistureValue").innerText = moisture;
-        document.getElementById("temperatureValue").innerText = temperature + " °C";
-        document.getElementById("humidityValue").innerText = humidity + " %";
+<div>
 
-        document.getElementById("soil").innerText = latest.soil_condition;
-        document.getElementById("crop").innerText = latest.recommended_crop;
-        document.getElementById("fertilizer").innerText = latest.recommended_fertilizer;
+<h3>Moisture</h3>
+<p id="moistureValue">--</p>
 
-        // ----------------------
-        // Moisture Progress Bar
-        // ----------------------
-        const moisturePercent = Math.min(100, (moisture / 1023) * 100);
-        document.getElementById("moistureBar").style.width = moisturePercent + "%";
+<h3>Temperature</h3>
+<p id="temperatureValue">--</p>
 
-        // ----------------------
-        // Soil Alert
-        // ----------------------
-        let alertText = "";
+<h3>Humidity</h3>
+<p id="humidityValue">--</p>
 
-        if(latest.soil_condition === "Dry"){
-            alertText = "⚠ Soil is Dry — Irrigation Needed";
-        }
-        else if(latest.soil_condition === "Moderate"){
-            alertText = "🌾 Soil Moisture is Optimal";
-        }
-        else{
-            alertText = "💧 Soil is Wet";
-        }
+</div>
 
-        document.getElementById("soilAlertText").innerText = alertText;
+<h2>🌾 Crop Recommendation</h2>
 
-        // ----------------------
-        // Farmer Action
-        // ----------------------
-        let action = "";
+<p>Soil Condition: <span id="soil">--</span></p>
 
-        if(latest.soil_condition === "Dry"){
-            action = "🚿 Start irrigation to improve soil moisture.";
-        }
-        else if(latest.soil_condition === "Moderate"){
-            action = "✅ Soil condition is healthy.";
-        }
-        else{
-            action = "⚠ Soil too wet. Avoid irrigation.";
-        }
+<p>Recommended Crop: <span id="crop">--</span></p>
 
-        const farmerAction = document.getElementById("farmerAction");
-        if(farmerAction){
-            farmerAction.innerText = action;
-        }
+<p>Fertilizer: <span id="fertilizer">--</span></p>
 
-        // ----------------------
-        // Chart Data
-        // ----------------------
-        updateChart(data);
+<h2>📊 Moisture Chart</h2>
 
-    }
-    catch(error){
-        console.error("Dashboard Error:", error);
-    }
+<canvas id="sensorChart"></canvas>
 
-}
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 
-// ============================
-// 📊 Chart Setup
-// ============================
-function updateChart(data){
+</body>
 
-    const canvas = document.getElementById("sensorChart");
-
-    if(!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-
-    const labels = [];
-    const moistureValues = [];
-
-    data.slice().reverse().forEach(row=>{
-        labels.push(row.timestamp);
-        moistureValues.push(Number(row.moisture));
-    });
-
-    if(chart){
-        chart.destroy();
-    }
-
-    chart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Soil Moisture",
-                data: moistureValues,
-                borderWidth: 3,
-                tension: 0.3
-            }]
-        },
-        options:{
-            responsive:true,
-            scales:{
-                y:{
-                    beginAtZero:true
-                }
-            }
-        }
-    });
-
-}
-
-// ============================
-// 📈 Yield Prediction
-// ============================
-async function predictYield(){
-
-    const land = document.getElementById("landInput").value;
-    const crop = document.getElementById("crop").innerText;
-
-    if(!land){
-        alert("Enter land size");
-        return;
-    }
-
-    const response = await fetch("/predict_yield",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body: JSON.stringify({
-            land: land,
-            crop: crop
-        })
-    });
-
-    const result = await response.json();
-
-    document.getElementById("yieldResult").innerText =
-        "Estimated Yield: " + result.predicted_yield + " " + result.unit;
-
-}
-
-// ============================
-// 🔊 Voice Recommendation
-// ============================
-async function speakRecommendation(){
-
-    const crop = document.getElementById("crop").innerText;
-    const fertilizer = document.getElementById("fertilizer").innerText;
-    const soil = document.getElementById("soil").innerText;
-
-    const response = await fetch("/speak",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body: JSON.stringify({
-            crop: crop,
-            fertilizer: fertilizer,
-            soil: soil,
-            language: "en"
-        })
-    });
-
-    const audioBlob = await response.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-
-    const audio = new Audio(audioUrl);
-    audio.play();
-
-}
-
-// ============================
-// ⏱ Auto Refresh
-// ============================
-loadDashboard();
-setInterval(loadDashboard,5000);
-
-</script>
+</html>
