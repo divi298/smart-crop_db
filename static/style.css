@@ -398,5 +398,22 @@ padding:8px;
 margin:10px;
 
 }
+/* =========================
+FARM HEALTH SCORE
+========================= */
+
+#farmHealthScore{
+
+font-size:32px;
+font-weight:bold;
+color:#2e7d32;
+
+}
+
+#healthBar{
+
+background:#66bb6a;
+
+}
 
 }

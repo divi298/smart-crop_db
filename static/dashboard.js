@@ -243,6 +243,44 @@ document.getElementById("yieldResult").innerText=
 
 }
 
+/* =====================================
+🌱 FARM HEALTH SCORE
+===================================== */
+
+function calculateFarmHealth(moisture,temperature,humidity){
+
+let score = 100;
+
+/* moisture impact */
+
+if(moisture > 800) score -= 30;
+else if(moisture > 700) score -= 15;
+
+/* temperature impact */
+
+if(temperature > 38 || temperature < 15) score -= 20;
+
+/* humidity impact */
+
+if(humidity < 30) score -= 15;
+
+/* weather impact */
+
+if(currentWeather === "Rain") score -= 5;
+
+if(score < 0) score = 0;
+
+document.getElementById("farmHealthScore").innerText = score + "%";
+
+document.getElementById("healthBar").style.width = score + "%";
+
+}
+
+calculateFarmHealth(
+latest.moisture,
+latest.temperature,
+latest.humidity
+);
 
 /* =====================================
 🔊 VOICE RECOMMENDATION
