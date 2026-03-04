@@ -131,6 +131,31 @@ document.getElementById("farmerAction").innerText=message;
 
 
 /* =====================================
+🌱 FARM HEALTH SCORE
+===================================== */
+
+function calculateFarmHealth(moisture,temperature,humidity){
+
+let score = 100;
+
+if(moisture > 800) score -= 30;
+else if(moisture > 700) score -= 15;
+
+if(temperature > 38 || temperature < 15) score -= 20;
+
+if(humidity < 30) score -= 15;
+
+if(currentWeather === "Rain") score -= 5;
+
+if(score < 0) score = 0;
+
+document.getElementById("farmHealthScore").innerText = score + "%";
+document.getElementById("healthBar").style.width = score + "%";
+
+}
+
+
+/* =====================================
 📡 SENSOR DATA
 ===================================== */
 
@@ -144,13 +169,33 @@ if(!data || data.length===0) return;
 
 let latest=data[0];
 
-document.getElementById("moistureValue").innerText=latest.moisture;
-document.getElementById("temperatureValue").innerText=latest.temperature;
-document.getElementById("humidityValue").innerText=latest.humidity;
+/* sensor values */
 
-document.getElementById("soil").innerText=latest.soil_condition;
-document.getElementById("crop").innerText=latest.recommended_crop;
-document.getElementById("fertilizer").innerText=latest.recommended_fertilizer;
+document.getElementById("moistureValue").innerText = latest.moisture ?? "--";
+document.getElementById("temperatureValue").innerText = latest.temperature ?? "--";
+document.getElementById("humidityValue").innerText = latest.humidity ?? "--";
+
+
+/* smart field detection */
+
+let soil =
+latest.soil_condition ||
+latest.soil ||
+"--";
+
+let crop =
+latest.recommended_crop ||
+latest.crop ||
+"--";
+
+let fertilizer =
+latest.recommended_fertilizer ||
+latest.fertilizer ||
+"--";
+
+document.getElementById("soil").innerText = soil;
+document.getElementById("crop").innerText = crop;
+document.getElementById("fertilizer").innerText = fertilizer;
 
 
 /* progress bar */
@@ -165,7 +210,16 @@ document.getElementById("moistureBar").style.width=moisturePercent+"%";
 irrigationAdvice(latest.moisture);
 
 
-/* update chart */
+/* farm health */
+
+calculateFarmHealth(
+latest.moisture,
+latest.temperature,
+latest.humidity
+);
+
+
+/* chart */
 
 updateChart(data);
 
@@ -238,49 +292,11 @@ land:land
 
 const data=await res.json();
 
-document.getElementById("yieldResult").innerText=
+document.getElementById("yieldResult").innerText =
 "Estimated Yield: "+data.predicted_yield+" "+data.unit;
 
 }
 
-/* =====================================
-🌱 FARM HEALTH SCORE
-===================================== */
-
-function calculateFarmHealth(moisture,temperature,humidity){
-
-let score = 100;
-
-/* moisture impact */
-
-if(moisture > 800) score -= 30;
-else if(moisture > 700) score -= 15;
-
-/* temperature impact */
-
-if(temperature > 38 || temperature < 15) score -= 20;
-
-/* humidity impact */
-
-if(humidity < 30) score -= 15;
-
-/* weather impact */
-
-if(currentWeather === "Rain") score -= 5;
-
-if(score < 0) score = 0;
-
-document.getElementById("farmHealthScore").innerText = score + "%";
-
-document.getElementById("healthBar").style.width = score + "%";
-
-}
-
-calculateFarmHealth(
-latest.moisture,
-latest.temperature,
-latest.humidity
-);
 
 /* =====================================
 🔊 VOICE RECOMMENDATION
